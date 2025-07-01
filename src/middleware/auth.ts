@@ -1,8 +1,4 @@
-interface Session {
-  userId: number;
-  email: string;
-  created: string;
-}
+import type { Session } from "../types/types";
 
 export function isAuthenticated(request: Request): boolean {
   const session = getSession(request);
@@ -11,7 +7,7 @@ export function isAuthenticated(request: Request): boolean {
   // Verify the session is not expired
   const createdDate = new Date(session.created);
   const now = new Date();
-  
+
   // Get the cookie to check if it's a long-term session
   const cookies = request.headers.get('cookie');
   const sessionCookie = cookies?.split(';').find(c => c.trim().startsWith('session='));
