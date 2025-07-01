@@ -29,7 +29,9 @@ const errorMessage = error
 <Layout title="Login" description="Login to your Monerpy account">
   <main class="min-h-screen flex items-center justify-center bg-gray-900">
     <div class="bg-gray-800 p-8 rounded-lg shadow-lg w-96">
-      <h1 class="text-3xl font-bold text-purple-500 mb-6 text-center">Are you Scarpy?</h1>
+      <h1 class="text-3xl font-bold text-purple-500 mb-6 text-center">
+        Are you Scarpy?
+      </h1>
       {
         error && (
           <div class="bg-red-500 text-white p-3 rounded mb-4 text-sm">
@@ -77,6 +79,11 @@ const errorMessage = error
           Login
         </button>
       </form>
+      <a
+        href="/"
+        class="block mt-4 text-purple-300 text-center w-full hover:underline"
+        >Back to Home</a
+      >
     </div>
   </main>
 </Layout>
