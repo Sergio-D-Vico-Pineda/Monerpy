@@ -1,0 +1,229 @@
+---
+import Layout from "@layouts/Layout.astro";
+import { isAuthenticated } from "../../middleware/auth";
+import { prisma } from "@prisma/index.js";
+import { getCurrentUserId } from "../../lib/auth";
+
+if (!isAuthenticated(Astro.request)) {
+  return Astro.redirect("/login");
+}
+
+const userId = await getCurrentUserId(Astro.request);
+if (!userId) {
+  return Astro.redirect("/login");
+}
+
+const { id } = Astro.params;
+if (!id || isNaN(parseInt(id))) {
+  return Astro.redirect("/transactions");
+}
+
+// Fetch transaction
+const transaction = await prisma.transaction.findFirst({
+  where: {
+    id: parseInt(id),
+    user_id: userId,
+    deleted_at: null,
+  },
+  include: {
+    splits: {
+      include: {
+        category: true,
+      },
+    },
+  },
+});
+
+if (!transaction) {
+  return Astro.redirect("/transactions");
+}
+
+// Fetch categories
+const categories = await prisma.category.findMany({
+  where: {
+    user_id: userId,
+    deleted_at: null,
+  },
+  orderBy: {
+    name: 'asc',
+  },
+});
+
+// Get the main split (the one that might have a category)
+const mainSplit = transaction.splits[0];
+---
+
+<Layout title="Edit Transaction">
+  <main class="min-h-screen bg-gray-900 text-white p-8">
+    <header class="mb-8 max-w-7xl mx-auto flex items-center justify-between">
+      <nav class="flex items-baseline space-x-4">
+        <h1 class="text-4xl font-bold text-purple-500">Edit Transaction</h1>
+        <a href="/transactions" class="text-lg font-semibold text-purple-300">
+          Back to Transactions
+        </a>
+      </nav>
+    </header>
+
+    <div class="max-w-2xl mx-auto">
+      <form
+        id="transactionForm"
+        class="bg-gray-800 rounded-lg shadow-lg p-6 space-y-6"
+        data-transaction-id={transaction.id}
+      >
+        <div class="space-y-4">
+          <div>
+            <label for="date" class="block text-sm font-medium mb-1">Date</label>
+            <input
+              type="date"
+              id="date"
+              name="date"
+              required
+              class="w-full px-4 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:outline-none focus:border-purple-500"
+              value={new Date(transaction.date).toISOString().split('T')[0]}
+            />
+          </div>
+
+          <div>
+            <label for="description" class="block text-sm font-medium mb-1">Description</label>
+            <input
+              type="text"
+              id="description"
+              name="description"
+              class="w-full px-4 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:outline-none focus:border-purple-500"
+              placeholder="Enter transaction description"
+              value={transaction.description || ''}
+            />
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label for="type" class="block text-sm font-medium mb-1">Type</label>
+              <select
+                id="type"
+                name="type"
+                required
+                class="w-full px-4 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:outline-none focus:border-purple-500"
+              >
+                <option value="income" selected={mainSplit.type === 'income'}>Income</option>
+                <option value="expense" selected={mainSplit.type === 'expense'}>Expense</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="amount" class="block text-sm font-medium mb-1">Amount</label>
+              <input
+                type="number"
+                id="amount"
+                name="amount"
+                required
+                min="0.01"
+                step="0.01"
+                class="w-full px-4 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:outline-none focus:border-purple-500"
+                value={mainSplit.amount}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label for="category" class="block text-sm font-medium mb-1">Category</label>
+            <select
+              id="category"
+              name="category_id"
+              class="w-full px-4 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:outline-none focus:border-purple-500"
+            >
+              <option value="">Select a category</option>
+              {categories.map((category) => (
+                <option
+                  value={category.id}
+                  selected={category.id === mainSplit.category_id}
+                >
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label for="note" class="block text-sm font-medium mb-1">Note</label>
+            <textarea
+              id="note"
+              name="note"
+              rows="3"
+              class="w-full px-4 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:outline-none focus:border-purple-500"
+              placeholder="Add a note (optional)"
+            >{mainSplit.note || ''}</textarea>
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-4">
+          <a
+            href="/transactions"
+            class="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition duration-200"
+          >
+            Cancel
+          </a>
+          <button
+            type="submit"
+            class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200"
+          >
+            Update Transaction
+          </button>
+        </div>
+      </form>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  const form = document.getElementById('transactionForm') as HTMLFormElement;
+  
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(form);
+    const transactionId = form.dataset.transactionId;
+    const date = formData.get('date') as string;
+    const description = formData.get('description') as string;
+    const type = formData.get('type') as 'income' | 'expense';
+    const amount = parseFloat(formData.get('amount') as string);
+    const category_id = formData.get('category_id') as string;
+    const note = formData.get('note') as string;
+
+    try {
+      const response = await fetch(`/api/transactions/${transactionId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          date: new Date(date).toISOString(),
+          description,
+          splits: [
+            {
+              type,
+              amount,
+              category_id: category_id ? parseInt(category_id) : undefined,
+              note: note || undefined,
+            },
+            {
+              type: type === 'income' ? 'expense' : 'income',
+              amount,
+              category_id: undefined,
+              note: undefined,
+            },
+          ],
+        }),
+      });
+
+      if (response.ok) {
+        window.location.href = '/transactions';
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Failed to update transaction');
+      }
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+      alert('Failed to update transaction');
+    }
+  });
+</script>

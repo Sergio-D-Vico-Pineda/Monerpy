@@ -1,0 +1,180 @@
+---
+import Layout from "@layouts/Layout.astro";
+import { isAuthenticated } from "../../middleware/auth";
+import { getCurrentUserId } from "../../lib/auth";
+import { transactionService } from "../../lib/services/transaction";
+
+if (!isAuthenticated(Astro.request)) {
+  return Astro.redirect("/login");
+}
+
+const userId = await getCurrentUserId(Astro.request);
+if (!userId) {
+  return Astro.redirect("/login");
+}
+
+const page = parseInt(Astro.url.searchParams.get('page') || '1');
+const search = Astro.url.searchParams.get('search') || undefined;
+const { transactions, total, pages } = await transactionService.list(userId, page, search);
+
+// Format currency
+const formatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD'
+});
+---
+
+<Layout title="Transactions">
+  <main class="min-h-screen bg-gray-900 text-white p-8">
+    <header class="mb-8 max-w-7xl mx-auto flex items-center justify-between">
+      <nav class="flex items-baseline space-x-4">
+        <h1 class="text-4xl font-bold text-purple-500">Transactions</h1>
+        <a href="/dashboard" class="text-lg font-semibold text-purple-300">
+          Dashboard
+        </a>
+      </nav>
+      <a
+        href="/transactions/new"
+        class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200"
+      >
+        New Transaction
+      </a>
+    </header>
+
+    <div class="max-w-7xl mx-auto">
+      <!-- Search Form -->
+      <form class="mb-6 flex gap-4">
+        <input
+          type="search"
+          name="search"
+          value={search}
+          placeholder="Search transactions..."
+          class="flex-1 px-4 py-2 bg-gray-800 text-white rounded border border-gray-700 focus:outline-none focus:border-purple-500"
+        />
+        <button
+          type="submit"
+          class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200"
+        >
+          Search
+        </button>
+        {search && (
+          <a
+            href="/transactions"
+            class="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition duration-200"
+          >
+            Clear
+          </a>
+        )}
+      </form>
+
+      <!-- Transactions Table -->
+      <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+        <table class="w-full">
+          <thead class="bg-gray-700">
+            <tr>
+              <th class="px-6 py-3 text-left text-sm font-semibold">Date</th>
+              <th class="px-6 py-3 text-left text-sm font-semibold">Description</th>
+              <th class="px-6 py-3 text-left text-sm font-semibold">Category</th>
+              <th class="px-6 py-3 text-right text-sm font-semibold">Amount</th>
+              <th class="px-6 py-3 text-center text-sm font-semibold">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-700">
+            {transactions.map((transaction) => (
+              <tr class="hover:bg-gray-700/50 transition duration-150">
+                <td class="px-6 py-4 text-sm">
+                  {new Date(transaction.date).toLocaleDateString()}
+                </td>
+                <td class="px-6 py-4 text-sm">{transaction.description || '-'}</td>
+                <td class="px-6 py-4 text-sm">
+                  {transaction.splits.map((split) => split.category?.name).join(', ') || '-'}
+                </td>
+                <td class="px-6 py-4 text-right text-sm">
+                  {transaction.splits.map((split) => (
+                    <div class={split.type === 'income' ? 'text-green-500' : 'text-red-500'}>
+                      {split.type === 'income' ? '+' : '-'}
+                      {formatter.format(Math.abs(split.amount))}
+                    </div>
+                  ))}
+                </td>
+                <td class="px-6 py-4 text-sm text-center">
+                  <div class="flex justify-center space-x-2">
+                    <a
+                      href={`/transactions/${transaction.id}`}
+                      class="text-purple-400 hover:text-purple-300"
+                    >
+                      Edit
+                    </a>
+                    <button
+                      data-transaction-id={transaction.id}
+                      class="text-red-400 hover:text-red-300 delete-transaction"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {transactions.length === 0 && (
+              <tr>
+                <td colspan="5" class="px-6 py-8 text-center text-gray-400">
+                  No transactions found {search && `matching "${search}"`}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      {pages > 1 && (
+        <div class="mt-6 flex justify-center gap-2">
+          {Array.from({ length: pages }, (_, i) => i + 1).map((pageNum) => (
+            <a
+              href={`/transactions?page=${pageNum}${search ? `&search=${search}` : ''}`}
+              class={`px-4 py-2 rounded transition duration-200 ${
+                pageNum === page
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              {pageNum}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  </main>
+</Layout>
+
+<script>
+  // Delete transaction handler
+  document.addEventListener('click', async (e) => {
+    const target = e.target as HTMLElement;
+    if (target.classList.contains('delete-transaction')) {
+      const id = target.dataset.transactionId;
+      if (!id) return;
+
+      if (!confirm('Are you sure you want to delete this transaction?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/transactions/${id}`, {
+          method: 'DELETE',
+        });
+
+        if (response.ok) {
+          // Refresh the page to show updated list
+          window.location.reload();
+        } else {
+          const data = await response.json();
+          alert(data.error || 'Failed to delete transaction');
+        }
+      } catch (error) {
+        console.error('Error deleting transaction:', error);
+        alert('Failed to delete transaction');
+      }
+    }
+  });
+</script>
