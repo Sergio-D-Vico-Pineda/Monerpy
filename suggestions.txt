@@ -1,0 +1,9 @@
+For the authorization suggestions I mentioned, here are some options we could implement later:
+
+Rate limiting for API endpoints
+Transaction amount limits/approvals
+Two-factor authentication for large transactions
+IP-based access controls
+Audit logging (already in schema)
+
+Would you like me to implement any of these now?
