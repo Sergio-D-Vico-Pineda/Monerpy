@@ -1,11 +1,42 @@
 ---
 import Layout from "@layouts/Layout.astro";
+import { isAuthenticated } from "../middleware/auth";
+
+if (isAuthenticated(Astro.request)) {
+  console.log(
+    "login.astro: User is already authenticated, redirecting to dashboard",
+  );
+  return Astro.redirect("/dashboard");
+}
+
+// Get query params for error messages
+const { searchParams } = Astro.url;
+const error = searchParams.get("error");
+
+const errorMessages: Record<string, string> = {
+  missing: "Please enter both email and password",
+  email: "Email not found",
+  password: "Incorrect password",
+  deleted: "This account has been deleted",
+  server: "An error occurred. Please try again later",
+};
+
+const errorMessage = error
+  ? errorMessages[error] || errorMessages.server
+  : null;
 ---
 
 <Layout title="Login" description="Login to your Monerpy account">
   <main class="min-h-screen flex items-center justify-center bg-gray-900">
     <div class="bg-gray-800 p-8 rounded-lg shadow-lg w-96">
-      <h1 class="text-3xl font-bold text-purple-500 mb-6 text-center">Login</h1>
+      <h1 class="text-3xl font-bold text-purple-500 mb-6 text-center">Are you Scarpy?</h1>
+      {
+        error && (
+          <div class="bg-red-500 text-white p-3 rounded mb-4 text-sm">
+            {errorMessage}
+          </div>
+        )
+      }
       <form action="/api/auth/login" method="POST" class="space-y-4">
         <div>
           <label for="email" class="block text-purple-300 mb-2">Email</label>
@@ -28,6 +59,16 @@ import Layout from "@layouts/Layout.astro";
             required
             class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
           />
+        </div>
+        <div class="flex items-center justify-between mb-4">
+          <label class="flex items-center text-purple-300">
+            <input
+              type="checkbox"
+              name="remember"
+              class="form-checkbox h-4 w-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
+            />
+            <span class="ml-2">Remember me</span>
+          </label>
         </div>
         <button
           type="submit"
