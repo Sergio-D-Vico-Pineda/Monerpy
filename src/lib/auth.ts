@@ -1,3 +1,5 @@
+import { isAuthenticated, getSession } from "../middleware/auth.ts";
+import type { Session } from "../types/types";
 import { prisma } from "@prisma/index.js";
 import bcrypt from "bcryptjs";
 
@@ -52,3 +54,14 @@ export async function validateCredentials(email: string, password: string): Prom
         return { success: false, error: 'server_error' };
     }
 }
+
+export const getCurrentUserId = async (request: Request): Promise<number | null> => {
+    if (!isAuthenticated(request)) return null;
+
+    const session: Session | null = getSession(request);
+    if (!session) return null;
+
+    const userId = session.userId;
+    if (!userId) return null;
+    return userId;
+};
