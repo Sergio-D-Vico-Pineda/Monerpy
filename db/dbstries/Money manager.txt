@@ -1,0 +1,38 @@
+### Enhanced Goals and Requirements
+
+### Primary Use Case
+
+The main purpose of the database is to track personal financial activities, including expenditures, earnings, and their respective timings. The database schema includes tables for users, categories, transaction groups, transactions, recurring transactions, audit logs, imports, and deleted records to support comprehensive financial management.
+
+### User Interaction
+
+Users will interact with the system through both a web interface and a mobile app. The system will support user authentication, role management, and various financial operations.
+
+### Reporting and Analytics
+
+While there are no specific reports identified initially, the goal is to include a wide variety of information types and reports to provide comprehensive insights. The database schema supports detailed transaction tracking, categorization, and grouping, which can be leveraged for generating various financial reports and analytics.
+
+### Scalability and Performance
+
+The system is expected to support a maximum of 5 users initially. The database design includes indexes, constraints, and efficient data types to ensure good performance. Any recommendations for upgrades to handle potential future growth should be communicated.
+
+### Security and Compliance
+
+There are no specific security or compliance requirements initially, but the database schema includes secure storage of user credentials (password hashes) and supports role-based access control. Suggestions for enhancing security, such as data encryption and regular audits, are welcome.
+
+### Integration with Other Systems
+
+There are no plans for integrating the database with other systems or services at this time. However, the schema includes an imports table to support potential future data import functionalities.
+
+### Database Schema Details
+
+1. **Users Table**: Stores user credentials and roles.
+2. **Categories Table**: Defines transaction categories for income and expenses.
+3. **Transaction Groups Table**: Logical groups for organizing related transactions.
+4. **Transactions Table**: Records actual financial activities.
+5. **Recurring Transactions Table**: Represents repeated transactions.
+6. **Audit Logs Table**: Tracks changes to records for auditing and undo purposes.
+7. **Imports Table**: Stores metadata for CSV or file imports.
+8. **Deleted Records Table**: Keeps deleted data for recovery purposes.
+
+This enhanced summary provides a comprehensive overview of the goals and requirements for the Money Manager database, including detailed information about the database schema and its intended use.
