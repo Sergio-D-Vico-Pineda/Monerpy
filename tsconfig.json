@@ -22,7 +22,13 @@
       ],
       "@pages/*": [
         "src/pages/*"
-      ]
+      ],
+      "@prisma/*": [
+        "prisma/*"
+      ],
+      "@lib/*": [
+        "src/lib/*"
+      ],
     }
   }
 }
