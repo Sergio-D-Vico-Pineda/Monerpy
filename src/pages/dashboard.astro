@@ -29,8 +29,9 @@ if (!isAuthenticated(Astro.request)) {
       </form>
     </header>
 
-    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- Monthly Overview Card -->
+    <section
+      class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+    >
       <article class="bg-gray-800 p-6 rounded-lg shadow-lg">
         <h2 class="text-xl font-semibold text-purple-400 mb-4">
           Monthly Overview
@@ -48,16 +49,18 @@ if (!isAuthenticated(Astro.request)) {
           Quick Actions
         </h2>
         <div class="space-y-3">
-          <button
-            class="w-full py-2 px-4 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200"
+          <a
+            href="/transactions/new"
+            class="w-full py-2 px-4 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200 text-center"
           >
             Add Transaction
-          </button>
-          <button
-            class="w-full py-2 px-4 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200"
+          </a>
+          <a
+            href="/transactions"
+            class="w-full py-2 px-4 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200 text-center"
           >
-            Manage Categories
-          </button>
+            View Transactions
+          </a>
         </div>
       </article>
 
