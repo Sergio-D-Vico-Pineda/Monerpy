@@ -13,9 +13,17 @@ export const GET: APIRoute = async ({ request, url }) => {
         }
 
         const page = parseInt(url.searchParams.get('page') || '1');
-        const search = url.searchParams.get('search') || undefined;
+        const search = url.searchParams.get('search');
+        const dateRange = url.searchParams.get('dateRange');
+        const types = url.searchParams.getAll('type');
 
-        const result = await transactionService.list(userId, page, search);
+        const filters = {
+            search: search && search.trim() !== '' ? search.trim() : undefined,
+            dateRange: dateRange ? { type: dateRange as 'last7days' | 'last30days' | 'thisMonth' } : undefined,
+            types: types.length > 0 ? types as ('income' | 'expense')[] : undefined
+        };
+
+        const result = await transactionService.list(userId, page, filters);
 
         return new Response(JSON.stringify(result), {
             status: 200,
@@ -50,7 +58,7 @@ export const POST: APIRoute = async ({ request }) => {
     } catch (error: any) {
         console.error('Error creating transaction:', error);
         return new Response(JSON.stringify({ error: error.message || 'Internal server error' }), {
-            status: error.message === 'Transaction splits must balance to zero' ? 400 : 500,
+            status: 500,
             headers: { 'Content-Type': 'application/json' }
         });
     }
