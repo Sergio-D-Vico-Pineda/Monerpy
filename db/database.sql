@@ -1,123 +1,89 @@
--- Users Table
+-- Money Manager Database Schema with Inline Comments
+
+-- 1. Users
+-- Stores user credentials and roles
 CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMPTZ
+    id SERIAL PRIMARY KEY, -- unique identifier for each user
+    username VARCHAR(255) UNIQUE NOT NULL, -- must be unique, used for login
+    password_hash VARCHAR(255) NOT NULL, -- securely stores the hashed password
+    email VARCHAR(255) UNIQUE, -- optional, must be unique if provided
+    role VARCHAR(50) DEFAULT 'user', -- defines role, e.g., 'user' or 'admin'
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- timestamp of user creation
+    deleted_at TIMESTAMP NULL, -- soft delete timestamp, NULL if not deleted
 );
 
--- Categories Table
-CREATE TABLE categories (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    name VARCHAR(50) NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMPTZ,
-    CONSTRAINT unique_user_category UNIQUE (user_id, name)
+-- 2. Transaction Groups
+-- Logical groups for organizing related transactions (e.g., 'Vacation 2025')
+CREATE TABLE transaction_groups (
+    id SERIAL PRIMARY KEY, -- unique ID
+    user_id INTEGER REFERENCES users (id) ON DELETE CASCADE, -- group owner
+    name VARCHAR(255) NOT NULL, -- name of the group
+    description TEXT, -- optional description
+    type VARCHAR(50) CHECK (type IN ('income', 'expense')), -- restrict type
+    soft_deleted BOOLEAN DEFAULT FALSE, -- used for hiding without deletion
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- creation time
 );
 
--- Tags Table
-CREATE TABLE tags (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    name VARCHAR(50) NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMPTZ,
-    CONSTRAINT unique_user_tag UNIQUE (user_id, name)
-);
-
--- Transactions Table (Simplified without accounts)
+-- 4. Transactions
+-- Records actual financial activities
 CREATE TABLE transactions (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    date DATE NOT NULL,
-    description TEXT,
-    is_recurring BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMPTZ
+    id SERIAL PRIMARY KEY, -- unique ID
+    user_id INTEGER REFERENCES users (id) ON DELETE CASCADE, -- owner
+    amount NUMERIC(12, 2) NOT NULL, -- transaction value in EUR
+    type VARCHAR(50) CHECK (type IN ('income', 'expense')), -- identifies the type
+    group_id INTEGER REFERENCES transaction_groups (id), -- optional group link
+    description TEXT, -- details about the transaction
+    transaction_date DATE NOT NULL, -- when the transaction occurred
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- when it was recorded
+    soft_deleted BOOLEAN DEFAULT FALSE -- allows hiding the transaction
 );
 
--- Splits Table with Type Enforcement
-CREATE TABLE splits (
-    id SERIAL PRIMARY KEY,
-    transaction_id INTEGER NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
-    type VARCHAR(10) NOT NULL CHECK (type IN ('expense', 'income')),
-    amount DECIMAL(15,2) NOT NULL CHECK (
-        (type = 'expense' AND amount < 0) OR 
-        (type = 'income' AND amount > 0)
-    ),
-    category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
-    note TEXT,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMPTZ
+-- 5. Recurring Transactions
+-- Represents repeated transactions (e.g., rent, salary)
+CREATE TABLE recurring_transactions (
+    id SERIAL PRIMARY KEY, -- unique ID
+    user_id INTEGER REFERENCES users (id) ON DELETE CASCADE, -- owner
+    amount NUMERIC(12, 2) NOT NULL, -- recurring amount
+    type VARCHAR(50) CHECK (type IN ('income', 'expense')), -- income or expense
+    group_id INTEGER REFERENCES transaction_groups (id), -- optional group
+    description TEXT, -- recurring transaction description
+    start_date DATE NOT NULL, -- first occurrence date
+    recurrence_rule TEXT NOT NULL, -- recurrence pattern (e.g., 'monthly')
+    next_occurrence DATE NOT NULL, -- when the next instance should be generated
+    active BOOLEAN DEFAULT TRUE, -- whether it's active
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- creation time
 );
 
--- Split-Tags Mapping Table
-CREATE TABLE split_tags (
-    split_id INTEGER NOT NULL REFERENCES splits(id) ON DELETE CASCADE,
-    tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (split_id, tag_id)
+-- 6. Audit Logs (for undo)
+-- Tracks changes to records for auditing and undo purposes
+CREATE TABLE audit_logs (
+    id SERIAL PRIMARY KEY, -- unique ID
+    user_id INTEGER REFERENCES users (id) ON DELETE CASCADE, -- user who performed the action
+    action VARCHAR(50) NOT NULL, -- type of action: create, update, delete
+    table_name VARCHAR(50) NOT NULL, -- table affected
+    record_id INTEGER NOT NULL, -- affected record ID
+    previous_state JSONB, -- original state before change
+    new_state JSONB, -- updated state after change
+    performed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- when the action occurred
 );
 
--- Enhanced Recurring Templates
-CREATE TABLE recurring_templates (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    description TEXT NOT NULL,
-    frequency VARCHAR(20) NOT NULL CHECK (frequency IN ('daily', 'weekly', 'monthly', 'yearly')),
-    next_occurrence DATE NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMPTZ
+-- 7. Imports
+-- Stores metadata for CSV or file imports
+CREATE TABLE imports (
+    id SERIAL PRIMARY KEY, -- unique ID
+    user_id INTEGER REFERENCES users (id) ON DELETE CASCADE, -- owner of the import
+    filename VARCHAR(255), -- name of the imported file
+    mapping JSONB, -- mapping of columns to fields
+    imported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- time of import
 );
 
--- Recurring Splits Table
-CREATE TABLE recurring_splits (
-    id SERIAL PRIMARY KEY,
-    template_id INTEGER NOT NULL REFERENCES recurring_templates(id) ON DELETE CASCADE,
-    type VARCHAR(10) NOT NULL CHECK (type IN ('expense', 'income')),
-    amount DECIMAL(15,2) NOT NULL CHECK (
-        (type = 'expense' AND amount < 0) OR 
-        (type = 'income' AND amount > 0)
-    ),
-    category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
-    note TEXT
+-- 8. Deleted Records (for full undo)
+-- Keeps deleted data for recovery purposes
+CREATE TABLE deleted_records (
+    id SERIAL PRIMARY KEY, -- unique ID
+    user_id INTEGER REFERENCES users (id) ON DELETE CASCADE, -- user who deleted
+    table_name VARCHAR(50) NOT NULL, -- from which table
+    record_id INTEGER NOT NULL, -- ID of deleted record
+    record_data JSONB NOT NULL, -- full record content
+    deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- time of deletion
 );
-
--- Imported Files Tracker
-CREATE TABLE imported_files (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    filename VARCHAR(255) NOT NULL,
-    file_hash VARCHAR(64) NOT NULL,
-    imported_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT unique_file_hash UNIQUE (file_hash)
-);
-
--- CSV Import Profiles
-CREATE TABLE import_profiles (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    name VARCHAR(50) NOT NULL,
-    mappings JSONB NOT NULL,  -- Stores field mappings (e.g., {"csv_column": "amount", "target_field": "splits.amount"}
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-
--- Audit Trail Table
-CREATE TABLE audit_log (
-    id BIGSERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-    action VARCHAR(20) NOT NULL CHECK (action IN ('create', 'update', 'delete', 'restore')),
-    table_name VARCHAR(50) NOT NULL,
-    record_id INTEGER NOT NULL,
-    old_values JSONB,
-    new_values JSONB,
-    executed_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-
--- Indexes for Performance
-CREATE INDEX idx_transactions_user ON transactions(user_id);
-CREATE INDEX idx_splits_type ON splits(type);
-CREATE INDEX idx_audit_log_record ON audit_log(table_name, record_id);

@@ -1,129 +1,101 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+    provider        = "prisma-client-js"
+    previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+    provider = "sqlite"
+    url      = "file:./dev.db"
 }
 
 model User {
-  id                  Int                 @id @default(autoincrement())
-  email               String              @unique
-  password_hash       String
-  created_at          DateTime            @default(now())
-  deleted_at          DateTime?
-  categories          Category[]
-  tags                Tag[]
-  transactions        Transaction[]
-  recurring_templates RecurringTemplate[]
-  imported_files      ImportedFile[]
-  import_profiles     ImportProfile[]
-  audit_logs          AuditLog[]
+    id           Int       @id @default(autoincrement())
+    username     String    @unique
+    passwordHash String
+    email        String    @unique
+    role         String    @default("user")
+    createdAt    DateTime  @default(now())
+    deletedAt    DateTime?
+
+    transactionGroups     TransactionGroup[]
+    transactions          Transaction[]
+    recurringTransactions RecurringTransaction[]
+    auditLogs             AuditLog[]
+    imports               Import[]
+    deletedRecords        DeletedRecord[]
 }
 
-model Category {
-  id               Int              @id @default(autoincrement())
-  user_id          Int
-  name             String
-  created_at       DateTime         @default(now())
-  deleted_at       DateTime?
-  user             User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  splits           Split[]
-  recurring_splits RecurringSplit[]
+model TransactionGroup {
+    id          Int      @id @default(autoincrement())
+    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId      Int
+    name        String
+    description String?
+    type        String // 'income' or 'expense'
+    softDeleted Boolean  @default(false)
+    createdAt   DateTime @default(now())
 
-  @@unique([user_id, name])
-}
-
-model Tag {
-  id         Int       @id @default(autoincrement())
-  user_id    Int
-  name       String
-  created_at DateTime  @default(now())
-  deleted_at DateTime?
-  user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  splits     Split[]   @relation("SplitToTag")
-
-  @@unique([user_id, name])
+    transactions          Transaction[]
+    recurringTransactions RecurringTransaction[]
 }
 
 model Transaction {
-  id           Int       @id @default(autoincrement())
-  user_id      Int
-  date         DateTime
-  description  String?
-  is_recurring Boolean   @default(false)
-  created_at   DateTime  @default(now())
-  deleted_at   DateTime?
-  user         User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  splits       Split[]
+    id              Int               @id @default(autoincrement())
+    user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId          Int
+    amount          Decimal
+    type            String // 'income' or 'expense'
+    group           TransactionGroup? @relation(fields: [groupId], references: [id])
+    groupId         Int?
+    description     String?
+    transactionDate DateTime
+    createdAt       DateTime          @default(now())
+    softDeleted     Boolean           @default(false)
 }
 
-model Split {
-  id             Int         @id @default(autoincrement())
-  transaction_id Int
-  type           String
-  amount         Float // Using Float instead of Decimal for SQLite
-  category_id    Int?
-  note           String?
-  created_at     DateTime    @default(now())
-  deleted_at     DateTime?
-  transaction    Transaction @relation(fields: [transaction_id], references: [id], onDelete: Cascade)
-  category       Category?   @relation(fields: [category_id], references: [id], onDelete: SetNull)
-  tags           Tag[]       @relation("SplitToTag")
-}
-
-model RecurringTemplate {
-  id              Int              @id @default(autoincrement())
-  user_id         Int
-  description     String
-  frequency       String
-  next_occurrence DateTime
-  created_at      DateTime         @default(now())
-  deleted_at      DateTime?
-  user            User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  splits          RecurringSplit[]
-}
-
-model RecurringSplit {
-  id          Int               @id @default(autoincrement())
-  template_id Int
-  type        String
-  amount      Float // Using Float instead of Decimal for SQLite
-  category_id Int?
-  note        String?
-  template    RecurringTemplate @relation(fields: [template_id], references: [id], onDelete: Cascade)
-  category    Category?         @relation(fields: [category_id], references: [id], onDelete: SetNull)
-}
-
-model ImportedFile {
-  id          Int      @id @default(autoincrement())
-  user_id     Int
-  filename    String
-  file_hash   String   @unique
-  imported_at DateTime @default(now())
-  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-}
-
-model ImportProfile {
-  id         Int      @id @default(autoincrement())
-  user_id    Int
-  name       String
-  mappings   Json
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+model RecurringTransaction {
+    id             Int               @id @default(autoincrement())
+    user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId         Int
+    amount         Decimal
+    type           String // 'income' or 'expense'
+    group          TransactionGroup? @relation(fields: [groupId], references: [id])
+    groupId        Int?
+    description    String?
+    startDate      DateTime
+    recurrenceRule String
+    nextOccurrence DateTime
+    active         Boolean           @default(true)
+    createdAt      DateTime          @default(now())
 }
 
 model AuditLog {
-  id          Int      @id @default(autoincrement())
-  user_id     Int?
-  action      String
-  table_name  String
-  record_id   Int
-  old_values  Json?
-  new_values  Json?
-  executed_at DateTime @default(now())
-  user        User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+    id            Int      @id @default(autoincrement())
+    user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId        Int
+    action        String
+    tableName     String
+    recordId      Int
+    previousState Json?
+    newState      Json?
+    performedAt   DateTime @default(now())
+}
+
+model Import {
+    id         Int      @id @default(autoincrement())
+    user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId     Int
+    filename   String?
+    mapping    Json?
+    importedAt DateTime @default(now())
+}
+
+model DeletedRecord {
+    id         Int      @id @default(autoincrement())
+    user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId     Int
+    tableName  String
+    recordId   Int
+    recordData Json
+    deletedAt  DateTime @default(now())
 }
