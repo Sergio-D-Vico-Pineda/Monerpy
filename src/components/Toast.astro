@@ -1,0 +1,79 @@
+---
+interface Props {
+  type?: 'success' | 'error' | 'info';
+}
+
+const { type = 'info' } = Astro.props;
+---
+
+<div
+  id="toast"
+  class={`fixed top-4 right-4 p-4 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50 ${
+    type === 'success' ? 'bg-green-600' :
+    type === 'error' ? 'bg-red-600' :
+    'bg-purple-600'
+  }`}
+>
+  <div class="flex items-center space-x-2">
+    {type === 'success' && (
+      <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+      </svg>
+    )}
+    {type === 'error' && (
+      <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    )}
+    {type === 'info' && (
+      <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+    )}
+    <p class="text-white" id="toastMessage"></p>
+  </div>
+</div>
+
+<script>
+  let timeoutId: number | null = null;
+
+  function showToast(message: string, type: 'success' | 'error' | 'info' = 'info', duration: number = 3000) {
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toastMessage');
+    if (!toast || !toastMessage) return;
+
+    // Update toast style based on type
+    toast.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg transform transition-transform duration-300 z-50 ${
+      type === 'success' ? 'bg-green-600' :
+      type === 'error' ? 'bg-red-600' :
+      'bg-purple-600'
+    }`;
+
+    // Set message
+    toastMessage.textContent = message;
+
+    // Show toast
+    toast.classList.remove('translate-x-full');
+
+    // Clear existing timeout
+    if (timeoutId !== null) {
+      window.clearTimeout(timeoutId);
+    }
+
+    // Hide toast after duration
+    timeoutId = window.setTimeout(() => {
+      toast.classList.add('translate-x-full');
+      timeoutId = null;
+    }, duration);
+  }
+
+  // Add to window object to make it globally available
+  window.showToast = showToast;
+
+  // Define the type for window object
+  declare global {
+    interface Window {
+      showToast: typeof showToast;
+    }
+  }
+</script>
