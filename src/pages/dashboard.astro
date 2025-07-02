@@ -19,14 +19,22 @@ if (!isAuthenticated(Astro.request)) {
           <a href="/">Home</a>
         </h2>
       </nav>
-      <form action="/api/auth/logout" method="POST" class="inline">
-        <button
-          type="submit"
-          class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition duration-200"
+      <div class="flex items-center space-x-4">
+        <a
+          href="/profile"
+          class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200"
         >
-          Logout
-        </button>
-      </form>
+          Profile
+        </a>
+        <form action="/api/auth/logout" method="POST" class="inline">
+          <button
+            type="submit"
+            class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition duration-200"
+          >
+            Logout
+          </button>
+        </form>
+      </div>
     </header>
 
     <section
@@ -37,9 +45,8 @@ if (!isAuthenticated(Astro.request)) {
           Monthly Overview
         </h2>
         <div class="space-y-2">
-          <p>Income: <span class="text-green-500">$0.00</span></p>
-          <p>Expenses: <span class="text-red-500">$0.00</span></p>
-          <p>Balance: <span class="text-blue-500">$0.00</span></p>
+          <p>Income this month: <span class="text-green-500">$0.00</span></p>
+          <p>Expenses this month: <span class="text-red-500">$0.00</span></p>
         </div>
       </article>
 
