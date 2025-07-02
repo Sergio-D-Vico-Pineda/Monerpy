@@ -1,7 +1,7 @@
 import { isAuthenticated, getSession } from "../middleware/auth.ts";
 import type { Session } from "../types/types";
 import { prisma } from "@prisma/index.js";
-import bcrypt from "bcryptjs";
+import { compare } from "bcryptjs";
 
 export interface LoginResult {
     success: boolean;
@@ -23,8 +23,8 @@ export async function validateCredentials(email: string, password: string): Prom
             select: {
                 id: true,
                 email: true,
-                password_hash: true,
-                deleted_at: true
+                passwordHash: true,
+                deletedAt: true
             }
         });
 
@@ -32,11 +32,11 @@ export async function validateCredentials(email: string, password: string): Prom
             return { success: false, error: 'user_not_found' };
         }
 
-        if (user.deleted_at) {
+        if (user.deletedAt) {
             return { success: false, error: 'account_deleted' };
         }
 
-        const validPassword = await bcrypt.compare(password, user.password_hash);
+        const validPassword = await compare(password, user.passwordHash);
 
         if (!validPassword) {
             return { success: false, error: 'invalid_password' };

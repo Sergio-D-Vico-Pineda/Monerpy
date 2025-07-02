@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { validateCredentials } from '@lib/auth.ts';
 
-export const POST: APIRoute = async ({ cookies, request, redirect }) => {
+export const POST: APIRoute = async ({ cookies, request }) => {
   try {
     const formData = await request.formData();
     const email = formData.get('email')?.toString() || '';
@@ -11,15 +11,23 @@ export const POST: APIRoute = async ({ cookies, request, redirect }) => {
     const result = await validateCredentials(email, password);
 
     if (!result.success) {
-      const errorMap: Record<string, string> = {
-        missing_credentials: 'missing',
-        user_not_found: 'email',
-        invalid_password: 'password',
-        account_deleted: 'deleted',
-        server_error: 'server'
+      const errorMessages: Record<string, string> = {
+        missing_credentials: 'Please enter both email and password',
+        user_not_found: 'Email not found',
+        invalid_password: 'Incorrect password',
+        account_deleted: 'This account has been deleted',
+        server_error: 'An error occurred. Please try again later'
       };
 
-      return redirect(`/login?error=${errorMap[result.error || 'server']}`);
+      return new Response(JSON.stringify({
+        success: false,
+        message: errorMessages[result.error || 'server_error']
+      }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
     }
 
     console.log('Login successful:', result);
@@ -41,10 +49,27 @@ export const POST: APIRoute = async ({ cookies, request, redirect }) => {
       secure: true,
       maxAge: maxAge
     });
-    return redirect('/dashboard');
+
+    return new Response(JSON.stringify({
+      success: true,
+      redirect: '/dashboard'
+    }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
   } catch (error) {
     console.error('Login error:', error);
-    return redirect('/login?error=server');
+    return new Response(JSON.stringify({
+      success: false,
+      message: 'An error occurred. Please try again later'
+    }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
   }
 };
 

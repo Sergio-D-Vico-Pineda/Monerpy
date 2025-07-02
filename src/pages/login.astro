@@ -1,5 +1,6 @@
 ---
 import Layout from "@layouts/Layout.astro";
+import Toast from "@components/Toast.astro";
 import { isAuthenticated } from "../middleware/auth.ts";
 
 if (isAuthenticated(Astro.request)) {
@@ -9,21 +10,7 @@ if (isAuthenticated(Astro.request)) {
   return Astro.redirect("/dashboard");
 }
 
-// Get query params for error messages
-const { searchParams } = Astro.url;
-const error = searchParams.get("error");
-
-const errorMessages: Record<string, string> = {
-  missing: "Please enter both email and password",
-  email: "Email not found",
-  password: "Incorrect password",
-  deleted: "This account has been deleted",
-  server: "An error occurred. Please try again later",
-};
-
-const errorMessage = error
-  ? errorMessages[error] || errorMessages.server
-  : null;
+// No need for error message handling here anymore
 ---
 
 <Layout title="Login" description="Login to your Monerpy account">
@@ -32,14 +19,7 @@ const errorMessage = error
       <h1 class="text-3xl font-bold text-purple-500 mb-6 text-center">
         Are you Scarpy?
       </h1>
-      {
-        error && (
-          <div class="bg-red-500 text-white p-3 rounded mb-4 text-sm">
-            {errorMessage}
-          </div>
-        )
-      }
-      <form action="/api/auth/login" method="POST" class="space-y-4">
+      <form id="loginForm" class="space-y-4">
         <div>
           <label for="email" class="block text-purple-300 mb-2">Email</label>
           <input
@@ -86,4 +66,58 @@ const errorMessage = error
       >
     </div>
   </main>
+  <Toast />
 </Layout>
+
+<script>
+  const form = document.getElementById("loginForm") as HTMLFormElement;
+  const loginButton = form.querySelector(
+    'button[type="submit"]',
+  ) as HTMLButtonElement;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    // Disable button and show loading state
+    loginButton.disabled = true;
+    const originalText = loginButton.textContent;
+    loginButton.innerHTML = `
+      <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      Logging in...
+    `;
+
+    try {
+      const formData = new FormData(form);
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+
+      if (data.success) {
+        window.showToast("Login successful! Redirecting...", "success");
+        setTimeout(() => {
+          window.location.href = data.redirect;
+        }, 1000);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      window.showToast(
+        error instanceof Error ? error.message : "Login failed",
+        "error",
+      );
+
+      // Reset button state
+      loginButton.disabled = false;
+      loginButton.textContent = originalText;
+    }
+  });
+</script>
