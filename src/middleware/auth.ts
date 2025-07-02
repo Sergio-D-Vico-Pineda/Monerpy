@@ -1,6 +1,6 @@
 import type { Session } from "../types/types";
 
-export function isAuthenticated(request: Request): boolean {
+function isAuthenticated(request: Request): boolean {
   const session = getSession(request);
   if (!session) return false;
 
@@ -20,7 +20,7 @@ export function isAuthenticated(request: Request): boolean {
   return (now.getTime() - createdDate.getTime()) < maxAge;
 }
 
-export function getSession(request: Request): Session | null {
+function getSession(request: Request): Session | null {
   const cookies = request.headers.get('cookie');
   if (!cookies) return null;
 
@@ -34,4 +34,15 @@ export function getSession(request: Request): Session | null {
   } catch {
     return null;
   }
+}
+
+function getCurrentUserId(request: Request): number | null {
+  const session = getSession(request);
+  return session?.userId ?? null;
+}
+
+export {
+  isAuthenticated,
+  getSession,
+  getCurrentUserId
 }
