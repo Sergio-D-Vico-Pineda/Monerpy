@@ -1,0 +1,608 @@
+---
+import Layout from "@layouts/Layout.astro";
+import Toast from "@components/Toast.astro";
+import { isAuthenticated, getCurrentUserId } from "../../../middleware/auth";
+import { prisma } from "@prisma/index.js";
+
+if (!isAuthenticated(Astro.request)) {
+    return Astro.redirect("/login");
+}
+
+const userId = await getCurrentUserId(Astro.request);
+if (!userId) {
+    return Astro.redirect("/login");
+}
+
+// Get transaction ID from URL
+const id = parseInt(Astro.params.id!);
+if (isNaN(id)) {
+    return Astro.redirect("/transactions");
+}
+
+// Get transaction data
+const transaction = await prisma.transaction.findFirst({
+    where: { id, userId, softDeleted: false },
+    include: {
+        group: {
+            select: {
+                id: true,
+                name: true,
+                type: true,
+            },
+        },
+    },
+});
+
+if (!transaction) {
+    return Astro.redirect("/transactions");
+}
+
+// Get all groups for the select input
+const groups = await prisma.transactionGroup.findMany({
+    where: { userId, softDeleted: false },
+    select: { id: true, name: true, type: true },
+});
+
+// Format date for input
+const date = new Date(transaction.transactionDate);
+date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+const formattedDate = date.toISOString().slice(0, 16);
+---
+
+<Layout title="Edit Transaction">
+    <main class="min-h-screen bg-gray-900 text-white p-8">
+        <div class="max-w-4xl mx-auto">
+            <header class="mb-8">
+                <div class="flex items-center justify-between">
+                    <nav class="flex items-baseline space-x-4">
+                        <h1 class="text-4xl font-bold text-purple-500">
+                            Edit Transaction
+                        </h1>
+                        <h2 class="text-lg font-semibold text-purple-300">
+                            <a href="/transactions">Back to Transactions</a>
+                        </h2>
+                    </nav>
+                    <a
+                        href="/transactions/recurring/new"
+                        class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200"
+                    >
+                        Create Recurring Instead
+                    </a>
+                </div>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Transaction Form -->
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <form id="transactionForm" class="space-y-6">
+                        <div>
+                            <label
+                                class="block text-sm font-medium mb-2"
+                                for="type"
+                            >
+                                Type <span class="text-red-500">*</span>
+                            </label>
+                            <select
+                                id="type"
+                                name="type"
+                                required
+                                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            >
+                                <option value="">Select Type</option>
+                                <option
+                                    value="income"
+                                    selected={transaction.type === "income"}
+                                    >Income</option
+                                >
+                                <option
+                                    value="expense"
+                                    selected={transaction.type === "expense"}
+                                    >Expense</option
+                                >
+                            </select>
+                            <p
+                                class="mt-1 text-sm text-red-500 hidden"
+                                id="typeError"
+                            >
+                            </p>
+                        </div>
+
+                        <div>
+                            <label
+                                class="block text-sm font-medium mb-2"
+                                for="amount"
+                            >
+                                Amount (€) <span class="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="number"
+                                id="amount"
+                                name="amount"
+                                required
+                                min="0.01"
+                                step="0.01"
+                                value={transaction.amount.toNumber()}
+                                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                placeholder="0.00"
+                            />
+                            <p
+                                class="mt-1 text-sm text-red-500 hidden"
+                                id="amountError"
+                            >
+                            </p>
+                        </div>
+
+                        <div>
+                            <label
+                                class="block text-sm font-medium mb-2"
+                                for="description"
+                            >
+                                Description
+                            </label>
+                            <textarea
+                                id="description"
+                                name="description"
+                                rows="3"
+                                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                placeholder="Enter description"
+                                >{transaction.description}</textarea
+                            >
+                            <p
+                                class="mt-1 text-sm text-red-500 hidden"
+                                id="descriptionError"
+                            >
+                            </p>
+                        </div>
+
+                        <div>
+                            <label
+                                class="block text-sm font-medium mb-2"
+                                for="transactionDate"
+                            >
+                                Date & Time <span class="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="datetime-local"
+                                id="transactionDate"
+                                name="transactionDate"
+                                required
+                                value={formattedDate}
+                                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                            <p
+                                class="mt-1 text-sm text-red-500 hidden"
+                                id="dateError"
+                            >
+                            </p>
+                        </div>
+
+                        <div>
+                            <label
+                                class="block text-sm font-medium mb-2"
+                                for="groupId"
+                            >
+                                Group
+                            </label>
+                            <select
+                                id="groupId"
+                                name="groupId"
+                                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            >
+                                <option value="">No Group</option>
+                                <optgroup label="Income Groups">
+                                    {
+                                        groups
+                                            .filter((g) => g.type === "income")
+                                            .map((group) => (
+                                                <option
+                                                    value={group.id}
+                                                    selected={
+                                                        group.id ===
+                                                        transaction.groupId
+                                                    }
+                                                >
+                                                    {group.name}
+                                                </option>
+                                            ))
+                                    }
+                                </optgroup>
+                                <optgroup label="Expense Groups">
+                                    {
+                                        groups
+                                            .filter((g) => g.type === "expense")
+                                            .map((group) => (
+                                                <option
+                                                    value={group.id}
+                                                    selected={
+                                                        group.id ===
+                                                        transaction.groupId
+                                                    }
+                                                >
+                                                    {group.name}
+                                                </option>
+                                            ))
+                                    }
+                                </optgroup>
+                            </select>
+                            <p
+                                class="mt-1 text-sm text-red-500 hidden"
+                                id="groupError"
+                            >
+                            </p>
+                        </div>
+
+                        <div class="flex justify-end space-x-4">
+                            <a
+                                href="/transactions"
+                                class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition duration-200"
+                            >
+                                Cancel
+                            </a>
+                            <button
+                                type="button"
+                                id="previewBtn"
+                                class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200"
+                            >
+                                Preview
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Preview Card -->
+                <div
+                    id="previewCard"
+                    class="bg-gray-800 p-6 rounded-lg shadow-lg hidden"
+                >
+                    <h3 class="text-xl font-semibold text-purple-400 mb-4">
+                        Preview
+                    </h3>
+                    <dl class="space-y-4">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-400">
+                                Type
+                            </dt>
+                            <dd id="previewType" class="mt-1"></dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-400">
+                                Amount
+                            </dt>
+                            <dd id="previewAmount" class="mt-1"></dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-400">
+                                Description
+                            </dt>
+                            <dd id="previewDescription" class="mt-1"></dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-400">
+                                Date & Time
+                            </dt>
+                            <dd id="previewDate" class="mt-1"></dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-400">
+                                Group
+                            </dt>
+                            <dd id="previewGroup" class="mt-1"></dd>
+                        </div>
+                    </dl>
+                    <div class="mt-6">
+                        <button
+                            type="button"
+                            id="saveBtn"
+                            class="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition duration-200"
+                        >
+                            Save Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Unsaved Changes Dialog -->
+        <div
+            id="unsavedDialog"
+            class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center hidden"
+        >
+            <div
+                class="bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full mx-4"
+            >
+                <h3 class="text-xl font-semibold mb-4">Unsaved Changes</h3>
+                <p class="mb-6">
+                    You have unsaved changes. Are you sure you want to leave?
+                </p>
+                <div class="flex justify-end space-x-4">
+                    <button
+                        id="stayBtn"
+                        class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition duration-200"
+                    >
+                        Stay
+                    </button>
+                    <button
+                        id="leaveBtn"
+                        class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition duration-200"
+                    >
+                        Leave
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+    <Toast />
+</Layout>
+
+<script>
+    const transactionId = parseInt(window.location.pathname.split("/")[2]);
+    let hasChanges = false;
+    let leavingTo: string | null = null;
+
+    // Form elements
+    const form = document.getElementById("transactionForm") as HTMLFormElement;
+    const typeInput = document.getElementById("type") as HTMLSelectElement;
+    const amountInput = document.getElementById("amount") as HTMLInputElement;
+    const descriptionInput = document.getElementById(
+        "description",
+    ) as HTMLTextAreaElement;
+    const dateInput = document.getElementById(
+        "transactionDate",
+    ) as HTMLInputElement;
+    const groupInput = document.getElementById("groupId") as HTMLSelectElement;
+
+    // Preview elements
+    const previewBtn = document.getElementById("previewBtn");
+    const previewCard = document.getElementById("previewCard");
+    const previewType = document.getElementById("previewType");
+    const previewAmount = document.getElementById("previewAmount");
+    const previewDescription = document.getElementById("previewDescription");
+    const previewDate = document.getElementById("previewDate");
+    const previewGroup = document.getElementById("previewGroup");
+    const saveBtn = document.querySelector("#saveBtn") as HTMLButtonElement;
+
+    // Dialog elements
+    const unsavedDialog = document.getElementById("unsavedDialog");
+    const stayBtn = document.getElementById("stayBtn");
+    const leaveBtn = document.getElementById("leaveBtn");
+
+    // Track changes
+    const originalValues = {
+        type: typeInput.value,
+        amount: amountInput.value,
+        description: descriptionInput.value,
+        date: dateInput.value,
+        group: groupInput.value,
+    };
+
+    [typeInput, amountInput, descriptionInput, dateInput, groupInput].forEach(
+        (input) => {
+            input?.addEventListener("change", () => {
+                const currentValues = {
+                    type: typeInput.value,
+                    amount: amountInput.value,
+                    description: descriptionInput.value,
+                    date: dateInput.value,
+                    group: groupInput.value,
+                };
+
+                hasChanges = Object.keys(originalValues).some(
+                    (key) =>
+                        originalValues[key as keyof typeof originalValues] !==
+                        currentValues[key as keyof typeof currentValues],
+                );
+
+                validateField(input);
+            });
+        },
+    );
+
+    // Client-side validation
+    function validateField(input: HTMLElement) {
+        const error = document.getElementById(`${input.id}Error`);
+        if (!error) return true;
+
+        error.classList.add("hidden");
+
+        if (input.id === "type") {
+            const select = input as HTMLSelectElement;
+            if (!select.value) {
+                error.textContent = "Please select a type";
+                error.classList.remove("hidden");
+                return false;
+            }
+        }
+
+        if (input.id === "amount") {
+            const amount = input as HTMLInputElement;
+            if (!amount.value) {
+                error.textContent = "Please enter an amount";
+                error.classList.remove("hidden");
+                return false;
+            }
+            const value = parseFloat(amount.value);
+            if (isNaN(value) || value <= 0) {
+                error.textContent = "Please enter a valid positive amount";
+                error.classList.remove("hidden");
+                return false;
+            }
+        }
+
+        if (input.id === "transactionDate") {
+            const date = input as HTMLInputElement;
+            if (!date.value) {
+                error.textContent = "Please select a date and time";
+                error.classList.remove("hidden");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function validateForm() {
+        let isValid = true;
+        let errors: any[] = [];
+
+        [typeInput, amountInput, dateInput].forEach((input) => {
+            if (!validateField(input)) {
+                isValid = false;
+                const error = document.getElementById(`${input.id}Error`);
+                if (error && error.textContent) {
+                    errors.push(error.textContent);
+                }
+            }
+        });
+
+        if (!isValid) {
+            window.showToast(
+                `Please fix the following: ${errors.join(", ")}`,
+                "error",
+            );
+        }
+        return isValid;
+    }
+
+    // Preview functionality
+    previewBtn?.addEventListener("click", () => {
+        if (!validateForm()) return;
+
+        if (previewType) {
+            previewType.textContent =
+                typeInput.value === "income" ? "🟢 Income" : "🔴 Expense";
+            previewType.className =
+                typeInput.value === "income"
+                    ? "mt-1 text-green-500"
+                    : "mt-1 text-red-500";
+        }
+
+        if (previewAmount) {
+            const amount = parseFloat(amountInput.value);
+            previewAmount.textContent = `€${amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+            previewAmount.className =
+                typeInput.value === "income"
+                    ? "mt-1 text-green-500"
+                    : "mt-1 text-red-500";
+        }
+
+        if (previewDescription) {
+            previewDescription.textContent = descriptionInput.value || "-";
+        }
+
+        if (previewDate) {
+            const date = new Date(dateInput.value);
+            previewDate.textContent = date.toLocaleString("en-US", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+            });
+        }
+
+        if (previewGroup) {
+            const selectedOption = groupInput.selectedOptions[0];
+            previewGroup.textContent = selectedOption
+                ? selectedOption.text
+                : "No Group";
+        }
+
+        previewCard?.classList.remove("hidden");
+    });
+
+    // Save functionality
+    saveBtn?.addEventListener("click", async () => {
+        if (!validateForm()) return;
+
+        // Show loading state
+        const saveSpinner = document.getElementById("saveSpinner");
+        const saveText = document.getElementById("saveText");
+        if (saveSpinner && saveText && saveBtn) {
+            saveSpinner.classList.remove("hidden");
+            saveText.textContent = "Saving...";
+            saveBtn.disabled = true;
+        }
+
+        try {
+            const response = await fetch(`/api/transactions/${transactionId}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    type: typeInput.value,
+                    amount: parseFloat(amountInput.value),
+                    description: descriptionInput.value || null,
+                    transactionDate: new Date(dateInput.value).toISOString(),
+                    groupId: groupInput.value
+                        ? parseInt(groupInput.value)
+                        : null,
+                }),
+            });
+
+            if (!response.ok) {
+                const data = await response
+                    .json()
+                    .catch(() => ({ message: "Failed to update transaction" }));
+                throw new Error(data.message || "Failed to update transaction");
+            }
+
+            window.showToast("Transaction updated successfully!", "success");
+            hasChanges = false;
+            window.location.href = "/transactions";
+        } catch (error) {
+            console.error("Error updating transaction:", error);
+            window.showToast(
+                error instanceof Error
+                    ? error.message
+                    : "Failed to update transaction",
+                "error",
+            );
+            // Reset loading state
+            if (saveSpinner && saveText && saveBtn) {
+                saveSpinner.classList.add("hidden");
+                saveText.textContent = "Save Changes";
+                saveBtn.disabled = false;
+            }
+        }
+    });
+
+    // Handle navigation
+    document.querySelectorAll("a").forEach((link) => {
+        link.addEventListener("click", (e) => {
+            if (!hasChanges) return;
+
+            e.preventDefault();
+            leavingTo = link.href;
+            unsavedDialog?.classList.remove("hidden");
+        });
+    });
+
+    window.addEventListener("beforeunload", (e) => {
+        if (hasChanges) {
+            e.preventDefault();
+            e.returnValue = "";
+        }
+    });
+
+    // Dialog buttons
+    stayBtn?.addEventListener("click", () => {
+        unsavedDialog?.classList.add("hidden");
+        leavingTo = null;
+    });
+
+    leaveBtn?.addEventListener("click", () => {
+        hasChanges = false;
+        if (leavingTo) {
+            window.location.href = leavingTo;
+        }
+    });
+
+    // Close dialog when clicking outside
+    unsavedDialog?.addEventListener("click", (e) => {
+        if (e.target === unsavedDialog) {
+            unsavedDialog.classList.add("hidden");
+            leavingTo = null;
+        }
+    });
+</script>
