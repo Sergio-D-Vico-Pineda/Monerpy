@@ -1,0 +1,481 @@
+---
+import Layout from "@layouts/Layout.astro";
+import { isAuthenticated, getCurrentUserId } from "../../middleware/auth";
+import { recurringTransactionService } from "../../lib/services/recurring-transaction";
+import { prisma } from "@prisma/index.js";
+import Toast from "../../components/Toast.astro";
+
+if (!isAuthenticated(Astro.request)) {
+    return Astro.redirect("/login");
+}
+
+const userId = await getCurrentUserId(Astro.request);
+if (!userId) {
+    return Astro.redirect("/login");
+}
+
+// Process any pending recurring transactions
+await recurringTransactionService.processRecurringTransactions(userId);
+
+// Get recurring transactions
+const recurringTransactions = await recurringTransactionService.getAll(userId);
+
+// Get all groups for filters
+const groups = await prisma.transactionGroup.findMany({
+    where: { userId, softDeleted: false },
+    select: { id: true, name: true, type: true },
+});
+
+// Separate income and expense transactions
+const incomeTransactions = recurringTransactions.filter(
+    (t) => t.type === "income",
+);
+const expenseTransactions = recurringTransactions.filter(
+    (t) => t.type === "expense",
+);
+---
+
+<Layout title="Recurring Transactions">
+    <main class="min-h-screen bg-gray-900 text-white p-8">
+        <header
+            class="mb-8 max-w-7xl mx-auto flex items-center justify-between"
+        >
+            <nav class="flex items-baseline space-x-4">
+                <h1 class="text-4xl font-bold text-purple-500">
+                    Recurring Transactions
+                </h1>
+                <h2 class="text-lg font-semibold text-purple-300">
+                    <a href="/dashboard">Dashboard</a>
+                </h2>
+            </nav>
+            <div class="flex items-center space-x-4">
+                <a
+                    href="/recurring-transactions/new"
+                    class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200"
+                >
+                    New Recurring Transaction
+                </a>
+            </div>
+        </header>
+
+        <section class="max-w-7xl mx-auto space-y-8">
+            <!-- Income Transactions -->
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h2 class="text-2xl font-semibold text-green-400 mb-4">
+                    Recurring Income
+                </h2>
+                {
+                    incomeTransactions.length === 0 ? (
+                        <p class="text-gray-400">
+                            No recurring income transactions
+                        </p>
+                    ) : (
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full">
+                                <thead>
+                                    <tr class="text-left text-gray-300">
+                                        <th class="py-3 px-4">Description</th>
+                                        <th class="py-3 px-4">Amount</th>
+                                        <th class="py-3 px-4">Category</th>
+                                        <th class="py-3 px-4">Frequency</th>
+                                        <th class="py-3 px-4">Next Date</th>
+                                        <th class="py-3 px-4">Status</th>
+                                        <th class="py-3 px-4">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {incomeTransactions.map((transaction) => (
+                                        <tr class="border-t border-gray-700">
+                                            <td class="py-3 px-4">
+                                                {transaction.description ||
+                                                    "No description"}
+                                            </td>
+                                            <td class="py-3 px-4 text-green-400">
+                                                ${transaction.amount.toFixed(2)}
+                                            </td>
+                                            <td class="py-3 px-4">
+                                                {transaction.group?.name ||
+                                                    "Uncategorized"}
+                                            </td>
+                                            <td class="py-3 px-4">
+                                                {(() => {
+                                                    const rule = JSON.parse(
+                                                        transaction.recurrenceRule,
+                                                    );
+                                                    const interval =
+                                                        rule.interval || 1;
+                                                    return `Every ${interval > 1 ? interval + " " : ""}${rule.frequency}${interval > 1 ? "s" : ""}`;
+                                                })()}
+                                            </td>
+                                            <td class="py-3 px-4">
+                                                {new Date(
+                                                    transaction.nextOccurrence,
+                                                ).toLocaleDateString()}
+                                            </td>
+                                            <td class="py-3 px-4">
+                                                <span
+                                                    class={
+                                                        transaction.active
+                                                            ? "text-green-400"
+                                                            : "text-gray-400"
+                                                    }
+                                                >
+                                                    {transaction.active
+                                                        ? "Active"
+                                                        : "Inactive"}
+                                                </span>
+                                            </td>
+                                            <td class="py-3 px-4">
+                                                <div class="flex space-x-2">
+                                                    <a
+                                                        href={`/recurring-transactions/${transaction.id}/edit`}
+                                                        class="text-purple-400 hover:text-purple-300"
+                                                    >
+                                                        Edit
+                                                    </a>
+                                                    <button
+                                                        data-id={transaction.id}
+                                                        class="toggle-active text-blue-400 hover:text-blue-300"
+                                                    >
+                                                        <span class="toggle-text">
+                                                            {transaction.active
+                                                                ? "Pause"
+                                                                : "Resume"}
+                                                        </span>
+                                                        <span class="loading-spinner hidden">
+                                                            <svg
+                                                                class="animate-spin h-4 w-4"
+                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                fill="none"
+                                                                viewBox="0 0 24 24"
+                                                            >
+                                                                <circle
+                                                                    class="opacity-25"
+                                                                    cx="12"
+                                                                    cy="12"
+                                                                    r="10"
+                                                                    stroke="currentColor"
+                                                                    stroke-width="4"
+                                                                />
+                                                                <path
+                                                                    class="opacity-75"
+                                                                    fill="currentColor"
+                                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                                                />
+                                                            </svg>
+                                                        </span>
+                                                    </button>
+                                                    <button
+                                                        data-id={transaction.id}
+                                                        class="delete-transaction text-red-400 hover:text-red-300"
+                                                    >
+                                                        <span class="delete-text">
+                                                            Delete
+                                                        </span>
+                                                        <span class="loading-spinner hidden">
+                                                            <svg
+                                                                class="animate-spin h-4 w-4"
+                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                fill="none"
+                                                                viewBox="0 0 24 24"
+                                                            >
+                                                                <circle
+                                                                    class="opacity-25"
+                                                                    cx="12"
+                                                                    cy="12"
+                                                                    r="10"
+                                                                    stroke="currentColor"
+                                                                    stroke-width="4"
+                                                                />
+                                                                <path
+                                                                    class="opacity-75"
+                                                                    fill="currentColor"
+                                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                                                />
+                                                            </svg>
+                                                        </span>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )
+                }
+            </div>
+
+            <!-- Expense Transactions -->
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h2 class="text-2xl font-semibold text-red-400 mb-4">
+                    Recurring Expenses
+                </h2>
+                {
+                    expenseTransactions.length === 0 ? (
+                        <p class="text-gray-400">
+                            No recurring expense transactions
+                        </p>
+                    ) : (
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full">
+                                <thead>
+                                    <tr class="text-left text-gray-300">
+                                        <th class="py-3 px-4">Description</th>
+                                        <th class="py-3 px-4">Amount</th>
+                                        <th class="py-3 px-4">Category</th>
+                                        <th class="py-3 px-4">Frequency</th>
+                                        <th class="py-3 px-4">Next Date</th>
+                                        <th class="py-3 px-4">Status</th>
+                                        <th class="py-3 px-4">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {expenseTransactions.map((transaction) => (
+                                        <tr class="border-t border-gray-700">
+                                            <td class="py-3 px-4">
+                                                {transaction.description ||
+                                                    "No description"}
+                                            </td>
+                                            <td class="py-3 px-4 text-red-400">
+                                                ${transaction.amount.toFixed(2)}
+                                            </td>
+                                            <td class="py-3 px-4">
+                                                {transaction.group?.name ||
+                                                    "Uncategorized"}
+                                            </td>
+                                            <td class="py-3 px-4">
+                                                {(() => {
+                                                    const rule = JSON.parse(
+                                                        transaction.recurrenceRule,
+                                                    );
+                                                    const interval =
+                                                        rule.interval || 1;
+                                                    return `Every ${interval > 1 ? interval + " " : ""}${rule.frequency}${interval > 1 ? "s" : ""}`;
+                                                })()}
+                                            </td>
+                                            <td class="py-3 px-4">
+                                                {new Date(
+                                                    transaction.nextOccurrence,
+                                                ).toLocaleDateString()}
+                                            </td>
+                                            <td class="py-3 px-4">
+                                                <span
+                                                    class={
+                                                        transaction.active
+                                                            ? "text-green-400"
+                                                            : "text-gray-400"
+                                                    }
+                                                >
+                                                    {transaction.active
+                                                        ? "Active"
+                                                        : "Inactive"}
+                                                </span>
+                                            </td>
+                                            <td class="py-3 px-4">
+                                                <div class="flex space-x-2">
+                                                    <a
+                                                        href={`/recurring-transactions/${transaction.id}/edit`}
+                                                        class="text-purple-400 hover:text-purple-300"
+                                                    >
+                                                        Edit
+                                                    </a>
+                                                    <button
+                                                        data-id={transaction.id}
+                                                        class="toggle-active text-blue-400 hover:text-blue-300"
+                                                    >
+                                                        <span class="toggle-text">
+                                                            {transaction.active
+                                                                ? "Pause"
+                                                                : "Resume"}
+                                                        </span>
+                                                        <span class="loading-spinner hidden">
+                                                            <svg
+                                                                class="animate-spin h-4 w-4"
+                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                fill="none"
+                                                                viewBox="0 0 24 24"
+                                                            >
+                                                                <circle
+                                                                    class="opacity-25"
+                                                                    cx="12"
+                                                                    cy="12"
+                                                                    r="10"
+                                                                    stroke="currentColor"
+                                                                    stroke-width="4"
+                                                                />
+                                                                <path
+                                                                    class="opacity-75"
+                                                                    fill="currentColor"
+                                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                                                />
+                                                            </svg>
+                                                        </span>
+                                                    </button>
+                                                    <button
+                                                        data-id={transaction.id}
+                                                        class="delete-transaction text-red-400 hover:text-red-300"
+                                                    >
+                                                        <span class="delete-text">
+                                                            Delete
+                                                        </span>
+                                                        <span class="loading-spinner hidden">
+                                                            <svg
+                                                                class="animate-spin h-4 w-4"
+                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                fill="none"
+                                                                viewBox="0 0 24 24"
+                                                            >
+                                                                <circle
+                                                                    class="opacity-25"
+                                                                    cx="12"
+                                                                    cy="12"
+                                                                    r="10"
+                                                                    stroke="currentColor"
+                                                                    stroke-width="4"
+                                                                />
+                                                                <path
+                                                                    class="opacity-75"
+                                                                    fill="currentColor"
+                                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                                                />
+                                                            </svg>
+                                                        </span>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )
+                }
+            </div>
+        </section>
+    </main>
+    <Toast />
+</Layout>
+
+<script>
+    // Handle toggle active state
+    document.querySelectorAll(".toggle-active").forEach((button) => {
+        button.addEventListener("click", async () => {
+            const id = button.getAttribute("data-id");
+            if (!id) return;
+
+            const textSpan = button.querySelector(".toggle-text");
+            const loadingSpinner = button.querySelector(".loading-spinner");
+            if (!textSpan || !loadingSpinner) return;
+
+            // Show loading state
+            textSpan.classList.add("hidden");
+            loadingSpinner.classList.remove("hidden");
+            (button as HTMLButtonElement).disabled = true;
+
+            try {
+                const response = await fetch(
+                    `/api/recurring-transactions/${id}`,
+                    {
+                        method: "PATCH",
+                    },
+                );
+
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    const error = await response.json();
+                    window.showToast(
+                        error.error || "Failed to toggle transaction status",
+                        "error",
+                    );
+                    // Reset button state
+                    textSpan.classList.remove("hidden");
+                    loadingSpinner.classList.add("hidden");
+                    (button as HTMLButtonElement).disabled = false;
+                }
+            } catch (error) {
+                window.showToast(
+                    "Failed to toggle transaction status",
+                    "error",
+                );
+                // Reset button state
+                textSpan.classList.remove("hidden");
+                loadingSpinner.classList.add("hidden");
+                (button as HTMLButtonElement).disabled = false;
+            }
+        });
+    });
+
+    // Handle delete
+    document.querySelectorAll(".delete-transaction").forEach((button) => {
+        button.addEventListener("click", async () => {
+            const id = button.getAttribute("data-id");
+            if (!id) return;
+
+            if (
+                !confirm(
+                    "Are you sure you want to delete this recurring transaction?",
+                )
+            ) {
+                return;
+            }
+
+            const textSpan = button.querySelector(".delete-text");
+            const loadingSpinner = button.querySelector(".loading-spinner");
+            if (!textSpan || !loadingSpinner) return;
+
+            // Show loading state
+            textSpan.classList.add("hidden");
+            loadingSpinner.classList.remove("hidden");
+            (button as HTMLButtonElement).disabled = true;
+
+            try {
+                const response = await fetch(
+                    `/api/recurring-transactions/${id}`,
+                    {
+                        method: "DELETE",
+                    },
+                );
+
+                if (response.ok) {
+                    window.showToast(
+                        "Transaction deleted successfully",
+                        "success",
+                    );
+                    // Remove the row from the table
+                    const row = button.closest("tr");
+                    if (row) {
+                        row.remove();
+                        // Check if this was the last row
+                        const tbody = row.parentElement;
+                        if (tbody && !tbody.children.length) {
+                            // Show "No transactions" message
+                            const table = tbody.closest(".overflow-x-auto");
+                            if (table) {
+                                table.innerHTML =
+                                    '<p class="text-gray-400">No recurring transactions</p>';
+                            }
+                        }
+                    }
+                } else {
+                    const error = await response.json();
+                    window.showToast(
+                        error.error || "Failed to delete transaction",
+                        "error",
+                    );
+                    // Reset button state
+                    textSpan.classList.remove("hidden");
+                    loadingSpinner.classList.add("hidden");
+                    (button as HTMLButtonElement).disabled = false;
+                }
+            } catch (error) {
+                window.showToast("Failed to delete transaction", "error");
+                // Reset button state
+                textSpan.classList.remove("hidden");
+                loadingSpinner.classList.add("hidden");
+                (button as HTMLButtonElement).disabled = false;
+            }
+        });
+    });
+</script>
