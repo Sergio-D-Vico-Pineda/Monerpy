@@ -42,11 +42,14 @@ export const POST: APIRoute = async ({ cookies, request }) => {
     // Set session cookie with secure options
     const maxAge = remember ? 30 * 24 * 60 * 60 : 24 * 60 * 60; // 30 days if remember, 24 hours if not
 
+    // Determine if we're in a secure environment
+    const isSecureEnvironment = request.url.startsWith('https://');
+
     cookies.set('session', JSON.stringify(session), {
       path: '/',
       httpOnly: true,
-      sameSite: 'strict',
-      secure: true,
+      sameSite: isSecureEnvironment ? 'strict' : 'lax',
+      secure: isSecureEnvironment, // Only require secure for HTTPS
       maxAge: maxAge
     });
 
