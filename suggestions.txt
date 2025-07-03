@@ -117,9 +117,11 @@ Looking at the Prisma schema, here are the key models that don't have correspond
 - `/transaction-groups/new` - Create new groups
 - `/transaction-groups/[id]/edit` - Edit groups
 This is important as transactions are linked to groups and it's a core feature of the system.
----
 
-
+3. **User Profile/Settings**
+- `/profile` - View and edit user profile
+- `/settings` - User preferences and account settings
+This is important for managing user information and preferences.
 
 2. **Recurring Transactions**
 - `/recurring-transactions` - List all recurring transactions
@@ -127,10 +129,7 @@ This is important as transactions are linked to groups and it's a core feature o
 - `/recurring-transactions/[id]/edit` - Edit recurring transactions
 This will help users automate regular income/expenses.
 
-3. **User Profile/Settings**
-- `/profile` - View and edit user profile
-- `/settings` - User preferences and account settings
-This is important for managing user information and preferences.
+---
 
 4. **Reports/Analytics**
 - `/reports` - Financial reports and analytics
