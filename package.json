@@ -22,8 +22,10 @@
     "@prisma/client": "^6.11.0",
     "@tailwindcss/vite": "^4.1.11",
     "@types/bcryptjs": "^2.4.6",
+    "apexcharts": "^4.7.0",
     "astro": "^5.10.1",
     "bcryptjs": "^3.0.2",
+    "chart.js": "^4.5.0",
     "tailwindcss": "^4.1.11"
   },
   "devDependencies": {
