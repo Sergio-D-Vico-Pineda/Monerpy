@@ -24,10 +24,14 @@ const groups = await transactionGroupService.list(userId, { search });
         <div class="max-w-7xl mx-auto">
             <div class="flex justify-between items-center mb-8">
                 <nav class="flex items-baseline space-x-4">
-                    <h1 class="text-4xl font-bold text-purple-500">Groups</h1>
                     <h2 class="text-lg font-semibold text-purple-300">
                         <a href="/transactions">Transactions</a>
                     </h2>
+                    <h1
+                        class="text-4xl font-bold text-purple-500 cursor-default"
+                    >
+                        Groups
+                    </h1>
                 </nav>
                 <a
                     href="/transaction-groups/new"

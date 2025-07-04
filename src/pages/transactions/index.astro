@@ -36,12 +36,14 @@ const groups = await prisma.transactionGroup.findMany({
         <header class="mb-8 max-w-7xl mx-auto">
             <div class="flex items-center justify-between mb-8">
                 <nav class="flex items-baseline space-x-4">
-                    <h1 class="text-4xl font-bold text-purple-500">
-                        Transactions
-                    </h1>
                     <h2 class="text-lg font-semibold text-purple-300">
                         <a href="/dashboard">Dashboard</a>
                     </h2>
+                    <h1
+                        class="text-4xl font-bold text-purple-500 cursor-default"
+                    >
+                        Transactions
+                    </h1>
                     <h2 class="text-lg font-semibold text-purple-300">
                         <a href="/transaction-groups">Groups</a>
                     </h2>
@@ -666,28 +668,35 @@ const groups = await prisma.transactionGroup.findMany({
         const newGroupId = groupSelect?.value;
         try {
             const ids = Array.from(selectedIds);
-            const currentTransactions = transactions.filter(t => ids.includes(t.id));
-            
+            const currentTransactions = transactions.filter((t) =>
+                ids.includes(t.id),
+            );
+
             for (const transaction of currentTransactions) {
-                const response = await fetch(`/api/transactions/${transaction.id}`, {
-                    method: "PUT",
-                    headers: {
-                        'Content-Type': 'application/json',
+                const response = await fetch(
+                    `/api/transactions/${transaction.id}`,
+                    {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            amount: transaction.amount,
+                            type: transaction.type as "income" | "expense",
+                            description: transaction.description,
+                            transactionDate: new Date(transaction.date),
+                            groupId: newGroupId ? parseInt(newGroupId) : null,
+                        }),
                     },
-                    body: JSON.stringify({
-                        amount: transaction.amount,
-                        type: transaction.type as 'income' | 'expense',
-                        description: transaction.description,
-                        transactionDate: new Date(transaction.date),
-                        groupId: newGroupId ? parseInt(newGroupId) : null
-                    }),
-                });
+                );
 
                 if (!response.ok) {
-                    console.error(`Failed to update transaction ${transaction.id}`);
+                    console.error(
+                        `Failed to update transaction ${transaction.id}`,
+                    );
                 }
             }
-            
+
             // Hide modal and reload page
             if (groupModal) {
                 groupModal.classList.add("hidden");

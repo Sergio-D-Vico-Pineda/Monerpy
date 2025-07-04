@@ -14,9 +14,20 @@ if (!isAuthenticated(Astro.request)) {
   <main class="min-h-screen bg-gray-900 text-white p-8">
     <header class="mb-8 max-w-7xl mx-auto flex items-center justify-between">
       <nav class="flex items-baseline space-x-4">
-        <h1 class="text-4xl font-bold text-purple-500">Dashboard</h1>
-        <h2 class="text-lg font-semibold text-purple-300">
+        <h2 class="text-lg font-semibold text-purple-300 hover:text-purple-100">
           <a href="/">Home</a>
+        </h2>
+        <h1 class="text-4xl font-bold text-purple-500 cursor-default">
+          Dashboard
+        </h1>
+        <h2 class="text-lg font-semibold text-purple-300 hover:text-purple-100">
+          <a href="/transactions"> Transactions </a>
+        </h2>
+        <h2 class="text-lg font-semibold text-purple-300 hover:text-purple-100">
+          <a href="/recurring-transactions"> Recurring </a>
+        </h2>
+        <h2 class="text-lg font-semibold text-purple-300 hover:text-purple-100">
+          <a href="/reports"> Reports </a>
         </h2>
       </nav>
       <div class="flex items-center space-x-4">
@@ -61,24 +72,6 @@ if (!isAuthenticated(Astro.request)) {
             class="block py-2 px-4 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200 text-center"
           >
             Add Transaction
-          </a>
-          <a
-            href="/transactions"
-            class="block py-2 px-4 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200 text-center"
-          >
-            View Transactions
-          </a>
-          <a
-            href="/recurring-transactions"
-            class="block py-2 px-4 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200 text-center"
-          >
-            Recurring Transactions
-          </a>
-          <a
-            href="/reports"
-            class="block py-2 px-4 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200 text-center"
-          >
-            Reports & Analytics
           </a>
         </div>
       </article>
