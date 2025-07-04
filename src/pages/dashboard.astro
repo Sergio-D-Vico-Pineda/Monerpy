@@ -73,6 +73,18 @@ if (!isAuthenticated(Astro.request)) {
           >
             Add Transaction
           </a>
+          <a
+            href="/recurring-transactions/new"
+            class="block py-2 px-4 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200 text-center"
+          >
+            Add Recurring Transaction
+          </a>
+          <a
+            href="/transaction-groups/new"
+            class="block py-2 px-4 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200 text-center"
+          >
+            Add Transaction Group
+          </a>
         </div>
       </article>
 
@@ -86,5 +98,271 @@ if (!isAuthenticated(Astro.request)) {
         </div>
       </article>
     </section>
+    <section class="max-w-7xl mx-auto mt-8 bg-gray-800 p-6 rounded-lg shadow-lg" id="calendar-container">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold text-purple-400">Transaction Calendar</h2>
+        <div class="flex space-x-2 items-center">
+          <button id="prevMonth" class="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200">&lt;</button>
+          <span id="currentMonth" class="text-lg font-medium text-white"></span>
+          <button id="nextMonth" class="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200">&gt;</button>
+          <button id="refreshMonth" class="ml-2 p-1.5 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="grid grid-cols-7 gap-1">
+        <div class="text-center p-2 text-purple-400 font-semibold">Mon</div>
+        <div class="text-center p-2 text-purple-400 font-semibold">Tue</div>
+        <div class="text-center p-2 text-purple-400 font-semibold">Wed</div>
+        <div class="text-center p-2 text-purple-400 font-semibold">Thu</div>
+        <div class="text-center p-2 text-purple-400 font-semibold">Fri</div>
+        <div class="text-center p-2 text-purple-400 font-semibold">Sat</div>
+        <div class="text-center p-2 text-purple-400 font-semibold">Sun</div>
+      </div>
+      <div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
+    </section>
   </main>
+
+  <script>
+    interface CalendarEvent {
+      id: number;
+      title: string;
+      date: string;
+      amount: number;
+      type: 'income' | 'expense';
+      isRecurring: boolean;
+    }
+
+    interface CacheEntry {
+      events: CalendarEvent[];
+      timestamp: number;
+    }
+
+    class Calendar {
+      private currentDate: Date;
+      private events: CalendarEvent[];
+      private calendarGrid: HTMLElement | null = null;
+      private currentMonthElement: HTMLElement | null = null;
+      private prevButton: HTMLElement | null = null;
+      private nextButton: HTMLElement | null = null;
+      private refreshButton: HTMLButtonElement | null = null;
+      private readonly CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+      constructor() {
+        this.currentDate = new Date();
+        this.events = [];
+        this.setupCalendar();
+        this.bindEvents();
+        this.loadEvents();
+      }
+
+      private getCacheKey(year: number, month: number): string {
+        return `calendar_${year}_${month}`;
+      }
+
+      private getCachedEvents(year: number, month: number): CalendarEvent[] | null {
+        const cacheKey = this.getCacheKey(year, month);
+        const cached = localStorage.getItem(cacheKey);
+        
+        if (!cached) return null;
+
+        const cacheEntry: CacheEntry = JSON.parse(cached);
+        const now = Date.now();
+
+        // Check if cache is expired (24 hours)
+        if (now - cacheEntry.timestamp > this.CACHE_DURATION) {
+          localStorage.removeItem(cacheKey);
+          return null;
+        }
+
+        return cacheEntry.events;
+      }
+
+      private setCachedEvents(year: number, month: number, events: CalendarEvent[]): void {
+        const cacheKey = this.getCacheKey(year, month);
+        const cacheEntry: CacheEntry = {
+          events,
+          timestamp: Date.now()
+        };
+        localStorage.setItem(cacheKey, JSON.stringify(cacheEntry));
+      }
+
+      setupCalendar() {
+        const grid = document.getElementById('calendar-grid');
+        const month = document.getElementById('currentMonth');
+        const prev = document.getElementById('prevMonth');
+        const next = document.getElementById('nextMonth');
+        const refresh = document.getElementById('refreshMonth');
+
+        if (!grid || !month || !prev || !next || !refresh) {
+          throw new Error('Required calendar elements not found');
+        }
+
+        this.calendarGrid = grid;
+        this.currentMonthElement = month;
+        this.prevButton = prev;
+        this.nextButton = next;
+        this.refreshButton = refresh as HTMLButtonElement;
+        this.renderCalendar();
+      }
+
+      bindEvents() {
+        if (!this.prevButton || !this.nextButton || !this.refreshButton) return;
+
+        this.prevButton.addEventListener('click', () => {
+          this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+          this.loadEvents();
+        });
+
+        this.nextButton.addEventListener('click', () => {
+          this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+          this.loadEvents();
+        });
+
+        this.refreshButton.addEventListener('click', () => {
+          this.fetchEvents(true);
+        });
+      }
+
+      async loadEvents() {
+        const year = this.currentDate.getFullYear();
+        const month = this.currentDate.getMonth();
+        
+        // Try to get events from cache first
+        const cachedEvents = this.getCachedEvents(year, month);
+        if (cachedEvents) {
+          this.events = cachedEvents;
+          this.renderCalendar();
+          return;
+        }
+
+        // If not in cache or expired, fetch from server
+        await this.fetchEvents(false);
+      }
+
+      async fetchEvents(forceRefresh: boolean = false) {
+        try {
+          const month = this.currentDate.getMonth();
+          const year = this.currentDate.getFullYear();
+
+          // If not forcing refresh, check cache first
+          if (!forceRefresh) {
+            const cachedEvents = this.getCachedEvents(year, month);
+            if (cachedEvents) {
+              this.events = cachedEvents;
+              this.renderCalendar();
+              return;
+            }
+          }
+
+          // Add loading indicator to refresh button
+          if (this.refreshButton) {
+            this.refreshButton.disabled = true;
+            this.refreshButton.classList.add('opacity-50');
+          }
+
+          const response = await fetch(`/api/calendar?month=${month}&year=${year}`);
+          const data = await response.json();
+          this.events = data.events || [];
+          
+          // Cache the new events
+          this.setCachedEvents(year, month, this.events);
+          this.renderCalendar();
+        } catch (error) {
+          console.error('Error fetching calendar events:', error);
+        } finally {
+          // Remove loading indicator
+          if (this.refreshButton) {
+            this.refreshButton.disabled = false;
+            this.refreshButton.classList.remove('opacity-50');
+          }
+        }
+      }
+
+      renderCalendar() {
+        if (!this.calendarGrid || !this.currentMonthElement) return;
+
+        const year = this.currentDate.getFullYear();
+        const month = this.currentDate.getMonth();
+        
+        // Update month/year display
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+          'July', 'August', 'September', 'October', 'November', 'December'];
+        this.currentMonthElement.textContent = `${monthNames[month]} ${year}`;
+
+        // Clear existing calendar
+        this.calendarGrid.innerHTML = '';
+
+        // Get first day of month and total days
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const totalDays = lastDay.getDate();
+        let startingDay = firstDay.getDay() - 1; // Convert to Monday-based
+        if (startingDay === -1) startingDay = 6; // If Sunday, make it last day
+
+        // Create calendar grid
+        for (let i = 0; i < startingDay; i++) {
+          const emptyCell = document.createElement('div');
+          emptyCell.className = 'p-2 bg-gray-700 rounded-lg min-h-[100px]';
+          this.calendarGrid.appendChild(emptyCell);
+        }
+
+        for (let day = 1; day <= totalDays; day++) {
+          const cell = document.createElement('div');
+          cell.className = 'p-2 bg-gray-700 rounded-lg min-h-[100px] relative';
+
+          // Add date number
+          const dateNumber = document.createElement('div');
+          dateNumber.className = 'absolute top-1 right-2 text-gray-400';
+          dateNumber.textContent = day.toString();
+          cell.appendChild(dateNumber);
+
+          // Get events for this day
+          const currentDate = new Date(year, month, day).toISOString().split('T')[0];
+          const dayEvents = this.events.filter(event => event.date === currentDate);
+
+          // Add events to the cell
+          const eventContainer = document.createElement('div');
+          eventContainer.className = 'mt-6 space-y-1';
+
+          dayEvents.forEach(event => {
+            const eventElement = document.createElement('div');
+            const amount = new Intl.NumberFormat('en-US', {
+              style: 'currency',
+              currency: 'USD'
+            }).format(Math.abs(event.amount));
+
+            eventElement.className = `p-1 rounded text-xs ${
+              event.type === 'income' 
+                ? 'bg-green-900/50 text-green-300' 
+                : 'bg-red-900/50 text-red-300'
+            } ${event.isRecurring ? 'border border-purple-500' : ''}`;
+            
+            eventElement.textContent = `${event.title} (${amount})`;
+            eventContainer.appendChild(eventElement);
+          });
+
+          cell.appendChild(eventContainer);
+          this.calendarGrid.appendChild(cell);
+        }
+
+        // Add empty cells at the end to complete the grid
+        const totalCells = startingDay + totalDays;
+        const remainingCells = 7 - (totalCells % 7);
+        if (remainingCells < 7) {
+          for (let i = 0; i < remainingCells; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'p-2 bg-gray-700 rounded-lg min-h-[100px]';
+            this.calendarGrid.appendChild(emptyCell);
+          }
+        }
+      }
+    }
+
+    // Initialize calendar when DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      new Calendar();
+    });
+  </script>
 </Layout>
