@@ -1,0 +1,167 @@
+src/pages/api/calendar/index.ts:86:27 - warning ts(6133): 'rule' is declared but its value is never read.
+
+86                     const rule = JSON.parse(rt.recurrenceRule);
+                             ~~~~
+
+src/pages/api/reports/custom.ts:12:20 - warning ts(80007): 'await' has no effect on the type of this expression.
+
+12     const userId = await getCurrentUserId(request);
+                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/pages/api/reports/monthly.ts:12:20 - warning ts(80007): 'await' has no effect on the type of this expression.
+
+12     const userId = await getCurrentUserId(request);
+                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/pages/api/reports/yearly.ts:12:20 - warning ts(80007): 'await' has no effect on the type of this expression.
+
+12     const userId = await getCurrentUserId(request);
+                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/pages/api/transaction-groups/[id].ts:72:20 - warning ts(80007): 'await' has no effect on the type of this expression.
+
+72     const userId = await getCurrentUserId(request);
+                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/pages/api/transaction-groups/[id].ts:36:20 - warning ts(80007): 'await' has no effect on the type of this expression.
+
+36     const userId = await getCurrentUserId(request);
+                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/pages/api/transaction-groups/[id].ts:12:20 - warning ts(80007): 'await' has no effect on the type of this expression.
+
+12     const userId = await getCurrentUserId(request);
+                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/pages/api/transaction-groups/index.ts:30:20 - warning ts(80007): 'await' has no effect on the type of this expression.
+
+30     const userId = await getCurrentUserId(request);
+                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/pages/api/transaction-groups/index.ts:12:20 - warning ts(80007): 'await' has no effect on the type of this expression.
+
+12     const userId = await getCurrentUserId(request);
+                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/pages/api/user/password.ts:16:15 - warning ts(6133): 'user' is declared but its value is never read.
+
+16         const user = await userService.update(userId, {
+                 ~~~~
+
+src/pages/profile/index.astro:10:16 - warning ts(80007): 'await' has no effect on the type of this expression.
+
+10 const userId = await getCurrentUserId(Astro.request);
+                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/pages/recurring-transactions/index.astro:24:7 - warning ts(6133): 'groups' is declared but its value is never read.
+
+24 const groups = await prisma.transactionGroup.findMany({
+         ~~~~~~
+src/pages/recurring-transactions/index.astro:12:16 - warning ts(80007): 'await' has no effect on the type of this expression.
+
+12 const userId = await getCurrentUserId(Astro.request);
+                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/pages/recurring-transactions/new.astro:11:16 - warning ts(80007): 'await' has no effect on the type of this expression.
+
+11 const userId = await getCurrentUserId(Astro.request);
+                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/pages/recurring-transactions/new.astro:361:31 - warning ts(6133): 'type' is declared but its value is never read.
+
+361   function showToast(message, type = 'info', duration = 3000) {
+                                  ~~~~
+src/pages/recurring-transactions/new.astro:204:9 - warning astro(4000): This script will be treated as if it has the `is:inline` directive because it contains an attribute. Therefore, features that require processing (e.g. using TypeScript or npm packages in the script) are unavailable.
+
+See docs for more details: https://docs.astro.build/en/guides/client-side-scripts/#script-processing.
+
+Add the `is:inline` directive explicitly to silence this hint.
+
+204 <script define:vars={{ groupsJson }}>
+            ~~~~~~~~~~~
+
+src/pages/recurring-transactions/[id]/edit.astro:12:16 - warning ts(80007): 'await' has no effect on the type of this expression.
+
+12 const userId = await getCurrentUserId(Astro.request);
+                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/pages/recurring-transactions/[id]/edit.astro:519:31 - warning ts(6133): 'type' is declared but its value is never read.
+
+519   function showToast(message, type = 'info', duration = 3000) {
+                                  ~~~~
+src/pages/recurring-transactions/[id]/edit.astro:358:9 - warning astro(4000): This script will be treated as if it has the `is:inline` directive because it contains an attribute. Therefore, features that require processing (e.g. using TypeScript or npm packages in the script) are unavailable.
+
+See docs for more details: https://docs.astro.build/en/guides/client-side-scripts/#script-processing.
+
+Add the `is:inline` directive explicitly to silence this hint.
+
+358 <script define:vars={{ data }}>
+            ~~~~~~~~~~~
+
+src/pages/reports/index.astro:11:16 - warning ts(80007): 'await' has no effect on the type of this expression.
+
+11 const userId = await getCurrentUserId(Astro.request);
+                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/pages/reports/index.astro:288:11 - warning ts(6133): 'dailyData' is declared but its value is never read.
+
+288     const dailyData = data.currentMonth.dailyTotals;
+              ~~~~~~~~~
+src/pages/reports/index.astro:49:11 - warning astro(4000): This script will be treated as if it has the `is:inline` directive because it contains an attribute. 
+Therefore, features that require processing (e.g. using TypeScript or npm packages in the script) are unavailable.
+
+See docs for more details: https://docs.astro.build/en/guides/client-side-scripts/#script-processing.
+
+Add the `is:inline` directive explicitly to silence this hint.
+
+49   <script id="reportData" type="application/json">
+             ~~
+
+src/pages/transaction-groups/index.astro:10:16 - warning ts(80007): 'await' has no effect on the type of this expression.
+
+10 const userId = await getCurrentUserId(Astro.request);
+                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/pages/transaction-groups/new.astro:9:16 - warning ts(80007): 'await' has no effect on the type of this expression.
+
+9 const userId = await getCurrentUserId(Astro.request);
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/pages/transaction-groups/[id]/edit.astro:10:16 - warning ts(80007): 'await' has no effect on the type of this expression.
+
+10 const userId = await getCurrentUserId(Astro.request);
+                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/pages/transactions/index.astro:21:23 - warning ts(6133): 'total' is declared but its value is never read.
+
+21 const { transactions, total, pages, summary } = await transactionService.list(
+                         ~~~~~
+src/pages/transactions/index.astro:11:16 - warning ts(80007): 'await' has no effect on the type of this expression.
+
+11 const userId = await getCurrentUserId(Astro.request);
+                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/pages/transactions/new.astro:11:16 - warning ts(80007): 'await' has no effect on the type of this expression.
+
+11 const userId = await getCurrentUserId(Astro.request);
+                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/pages/transactions/new.astro:534:15 - warning ts(6385): 'returnValue' is deprecated.
+
+534             e.returnValue = "";
+                  ~~~~~~~~~~~
+src/pages/transactions/new.astro:307:11 - warning ts(6133): 'form' is declared but its value is never read.
+
+307     const form = document.getElementById("transactionForm") as HTMLFormElement;
+              ~~~~
+
+src/pages/transactions/[id]/edit.astro:11:16 - warning ts(80007): 'await' has no effect on the type of this expression.
+
+11 const userId = await getCurrentUserId(Astro.request);
+                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/pages/transactions/[id]/edit.astro:584:15 - warning ts(6385): 'returnValue' is deprecated.
+
+584             e.returnValue = "";
+                  ~~~~~~~~~~~
+src/pages/transactions/[id]/edit.astro:343:11 - warning ts(6133): 'form' is declared but its value is never read.
+
+343     const form = document.getElementById("transactionForm") as HTMLFormElement;
+              ~~~~
+
+Result (42 files): 
+- 0 errors
+- 0 warnings
+- 33 hints
