@@ -11,7 +11,7 @@
     "init": "npm install && prisma generate",
     "dev": "astro dev",
     "deve": "astro dev --host",
-    "build": "astro check && astro build && prisma generate",
+    "build": "prisma generate && astro check && astro build",
     "preview": "astro preview",
     "astro": "astro"
   },
