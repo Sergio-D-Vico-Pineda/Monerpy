@@ -83,7 +83,8 @@ export const GET: APIRoute = async ({ request }) => {
             // Recurring transactions that occur in this month
             ...recurringTransactions
                 .filter(rt => {
-                    const rule = JSON.parse(rt.recurrenceRule);
+                    // const rule = JSON.parse(rt.recurrenceRule);
+                    // Aqui tendriamos que calcular las ocurrencias basadas en la regla de recurrencia
                     const occurrenceDate = new Date(rt.nextOccurrence);
                     return occurrenceDate >= startDate && occurrenceDate <= endDate;
                 })

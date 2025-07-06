@@ -340,7 +340,7 @@ const formattedDate = date.toISOString().slice(0, 16);
     let leavingTo: string | null = null;
 
     // Form elements
-    const form = document.getElementById("transactionForm") as HTMLFormElement;
+    // const form = document.getElementById("transactionForm") as HTMLFormElement;
     const typeInput = document.getElementById("type") as HTMLSelectElement;
     const amountInput = document.getElementById("amount") as HTMLInputElement;
     const descriptionInput = document.getElementById(
@@ -581,7 +581,7 @@ const formattedDate = date.toISOString().slice(0, 16);
     window.addEventListener("beforeunload", (e) => {
         if (hasChanges) {
             e.preventDefault();
-            e.returnValue = "";
+            // e.returnValue = "";
         }
     });
 

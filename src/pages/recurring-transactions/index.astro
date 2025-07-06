@@ -21,10 +21,10 @@ await recurringTransactionService.processRecurringTransactions(userId);
 const recurringTransactions = await recurringTransactionService.getAll(userId);
 
 // Get all groups for filters
-const groups = await prisma.transactionGroup.findMany({
+/* const groups = await prisma.transactionGroup.findMany({
     where: { userId, softDeleted: false },
     select: { id: true, name: true, type: true },
-});
+}); */
 
 // Separate income and expense transactions
 const incomeTransactions = recurringTransactions.filter(

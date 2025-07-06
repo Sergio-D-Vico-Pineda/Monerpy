@@ -13,7 +13,8 @@ export const PUT: APIRoute = async ({ request }) => {
         }
 
         const data = await request.json();
-        const user = await userService.update(userId, {
+        /* const user =  */
+        await userService.update(userId, {
             currentPassword: data.currentPassword,
             newPassword: data.newPassword,
         });
