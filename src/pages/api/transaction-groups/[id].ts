@@ -9,7 +9,7 @@ export const GET: APIRoute = async ({ params, request }) => {
         });
     }
 
-    const userId = await getCurrentUserId(request);
+    const userId = getCurrentUserId(request);
     if (!userId || !params.id) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
             status: 401,
@@ -33,7 +33,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
         });
     }
 
-    const userId = await getCurrentUserId(request);
+    const userId = getCurrentUserId(request);
     if (!userId || !params.id) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
             status: 401,
@@ -69,7 +69,7 @@ export const DEL: APIRoute = async ({ params, request }) => {
         });
     }
 
-    const userId = await getCurrentUserId(request);
+    const userId = getCurrentUserId(request);
     if (!userId || !params.id) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
             status: 401,

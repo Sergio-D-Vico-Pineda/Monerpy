@@ -6,7 +6,7 @@ if (!isAuthenticated(Astro.request)) {
     return Astro.redirect("/login");
 }
 
-const userId = await getCurrentUserId(Astro.request);
+const userId = getCurrentUserId(Astro.request);
 if (!userId) {
     return Astro.redirect("/login");
 }

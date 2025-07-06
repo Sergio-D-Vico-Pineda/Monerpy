@@ -9,7 +9,7 @@ export const GET: APIRoute = async ({ request }) => {
         });
     }
 
-    const userId = await getCurrentUserId(request);
+    const userId = getCurrentUserId(request);
     if (!userId) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
             status: 401,
@@ -27,7 +27,7 @@ export const POST: APIRoute = async ({ request }) => {
         });
     }
 
-    const userId = await getCurrentUserId(request);
+    const userId = getCurrentUserId(request);
     if (!userId) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
             status: 401,
