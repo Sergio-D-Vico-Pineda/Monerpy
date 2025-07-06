@@ -5,18 +5,18 @@ import { prisma } from "@prisma/index.js";
 import Toast from "../../components/Toast.astro";
 
 if (!isAuthenticated(Astro.request)) {
-    return Astro.redirect("/login");
+  return Astro.redirect("/login");
 }
 
 const userId = getCurrentUserId(Astro.request);
 if (!userId) {
-    return Astro.redirect("/login");
+  return Astro.redirect("/login");
 }
 
 // Get groups for the form
 const groups = await prisma.transactionGroup.findMany({
-    where: { userId, softDeleted: false },
-    select: { id: true, name: true, type: true },
+  where: { userId, softDeleted: false },
+  select: { id: true, name: true, type: true },
 });
 
 // Pass groups to frontend
@@ -28,14 +28,22 @@ const groupsJson = JSON.stringify(groups);
     <div class="max-w-3xl mx-auto">
       <header class="mb-8">
         <nav class="flex items-baseline space-x-4">
-          <h1 class="text-4xl font-bold text-purple-500">New Recurring Transaction</h1>
-          <a href="/recurring-transactions" class="text-lg font-semibold text-purple-300">
+          <h1 class="text-4xl font-bold text-purple-500">
+            New Recurring Transaction
+          </h1>
+          <a
+            href="/recurring-transactions"
+            class="text-lg font-semibold text-purple-300"
+          >
             Back to List
           </a>
         </nav>
       </header>
 
-      <form id="transactionForm" class="bg-gray-800 p-6 rounded-lg shadow-lg space-y-6">
+      <form
+        id="transactionForm"
+        class="bg-gray-800 p-6 rounded-lg shadow-lg space-y-6"
+      >
         <!-- Type Selection -->
         <div class="space-y-2">
           <label class="block text-gray-300">Type</label>
@@ -78,7 +86,9 @@ const groupsJson = JSON.stringify(groups);
 
         <!-- Description -->
         <div class="space-y-2">
-          <label for="description" class="block text-gray-300">Description</label>
+          <label for="description" class="block text-gray-300"
+            >Description</label
+          >
           <input
             type="text"
             id="description"
@@ -96,9 +106,11 @@ const groupsJson = JSON.stringify(groups);
             class="w-full px-4 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
           >
             <option value="">No category</option>
-            {groups.map((group) => (
-              <option value={group.id}>{group.name}</option>
-            ))}
+            {
+              groups.map((group) => (
+                <option value={group.id}>{group.name}</option>
+              ))
+            }
           </select>
         </div>
 
@@ -167,15 +179,19 @@ const groupsJson = JSON.stringify(groups);
           </div>
 
           <div id="monthOptions" class="hidden">
-            <label for="dayOfMonth" class="block text-gray-300">On day of month</label>
+            <label for="dayOfMonth" class="block text-gray-300"
+              >On day of month</label
+            >
             <select
               id="dayOfMonth"
               name="dayOfMonth"
               class="w-full px-4 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
-              {Array.from({ length: 31 }, (_, i) => (
-                <option value={i + 1}>{i + 1}</option>
-              ))}
+              {
+                Array.from({ length: 31 }, (_, i) => (
+                  <option value={i + 1}>{i + 1}</option>
+                ))
+              }
             </select>
           </div>
         </div>
@@ -188,9 +204,24 @@ const groupsJson = JSON.stringify(groups);
           >
             <span class="submit-text">Create Recurring Transaction</span>
             <span class="loading-spinner hidden ml-2">
-              <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <svg
+                class="animate-spin h-5 w-5"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
               </svg>
             </span>
           </button>
@@ -201,40 +232,40 @@ const groupsJson = JSON.stringify(groups);
   <Toast />
 </Layout>
 
-<script define:vars={{ groupsJson }}>
-  const form = document.getElementById('transactionForm');
-  const frequencySelect = document.getElementById('frequency');
-  const intervalLabel = document.getElementById('intervalLabel');
-  const dayOptions = document.getElementById('dayOptions');
-  const monthOptions = document.getElementById('monthOptions');
+<script is:inline define:vars={{ groupsJson }}>
+  const form = document.getElementById("transactionForm");
+  const frequencySelect = document.getElementById("frequency");
+  const intervalLabel = document.getElementById("intervalLabel");
+  const dayOptions = document.getElementById("dayOptions");
+  const monthOptions = document.getElementById("monthOptions");
   const groups = JSON.parse(groupsJson);
 
   // Update interval label and show/hide options based on frequency
   if (frequencySelect) {
-    frequencySelect.addEventListener('change', () => {
+    frequencySelect.addEventListener("change", () => {
       const frequency = frequencySelect.value;
       if (!intervalLabel || !dayOptions || !monthOptions) return;
 
       switch (frequency) {
-        case 'daily':
-          intervalLabel.textContent = 'days';
-          dayOptions.classList.add('hidden');
-          monthOptions.classList.add('hidden');
+        case "daily":
+          intervalLabel.textContent = "days";
+          dayOptions.classList.add("hidden");
+          monthOptions.classList.add("hidden");
           break;
-        case 'weekly':
-          intervalLabel.textContent = 'weeks';
-          dayOptions.classList.remove('hidden');
-          monthOptions.classList.add('hidden');
+        case "weekly":
+          intervalLabel.textContent = "weeks";
+          dayOptions.classList.remove("hidden");
+          monthOptions.classList.add("hidden");
           break;
-        case 'monthly':
-          intervalLabel.textContent = 'months';
-          dayOptions.classList.add('hidden');
-          monthOptions.classList.remove('hidden');
+        case "monthly":
+          intervalLabel.textContent = "months";
+          dayOptions.classList.add("hidden");
+          monthOptions.classList.remove("hidden");
           break;
-        case 'yearly':
-          intervalLabel.textContent = 'years';
-          dayOptions.classList.add('hidden');
-          monthOptions.classList.remove('hidden');
+        case "yearly":
+          intervalLabel.textContent = "years";
+          dayOptions.classList.add("hidden");
+          monthOptions.classList.remove("hidden");
           break;
       }
     });
@@ -242,75 +273,77 @@ const groupsJson = JSON.stringify(groups);
 
   // Show/hide appropriate group options based on transaction type
   const typeInputs = document.querySelectorAll('input[name="type"]');
-  const groupSelect = document.getElementById('groupId');
+  const groupSelect = document.getElementById("groupId");
 
   if (groupSelect instanceof HTMLSelectElement) {
-    typeInputs.forEach(input => {
+    typeInputs.forEach((input) => {
       if (!(input instanceof HTMLInputElement)) return;
 
-      input.addEventListener('change', () => {
+      input.addEventListener("change", () => {
         const type = input.value;
         const options = Array.from(groupSelect.options);
-        
-        options.forEach(option => {
-          if (option.value === '') return; // Skip "No category" option
-          const group = groups.find(g => g.id === parseInt(option.value));
-          option.style.display = !group || group.type === type ? '' : 'none';
+
+        options.forEach((option) => {
+          if (option.value === "") return; // Skip "No category" option
+          const group = groups.find((g) => g.id === parseInt(option.value));
+          option.style.display = !group || group.type === type ? "" : "none";
         });
 
         // Reset selection if current selection is not valid for new type
-        const selectedGroup = groups.find(g => g.id === parseInt(groupSelect.value));
+        const selectedGroup = groups.find(
+          (g) => g.id === parseInt(groupSelect.value),
+        );
         if (selectedGroup && selectedGroup.type !== type) {
-          groupSelect.value = '';
+          groupSelect.value = "";
         }
       });
     });
   }
 
   if (form instanceof HTMLFormElement) {
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const submitButton = document.getElementById('submitButton');
-      const submitText = submitButton?.querySelector('.submit-text');
-      const loadingSpinner = submitButton?.querySelector('.loading-spinner');
+      const submitButton = document.getElementById("submitButton");
+      const submitText = submitButton?.querySelector(".submit-text");
+      const loadingSpinner = submitButton?.querySelector(".loading-spinner");
       if (!submitButton || !submitText || !loadingSpinner) return;
 
       // Show loading state
-      submitText.classList.add('hidden');
-      loadingSpinner.classList.remove('hidden');
+      submitText.classList.add("hidden");
+      loadingSpinner.classList.remove("hidden");
       submitButton.disabled = true;
 
       const formData = new FormData(form);
-      const frequency = formData.get('frequency')?.toString() || 'monthly';
-      
+      const frequency = formData.get("frequency")?.toString() || "monthly";
+
       const recurrenceRule = {
         frequency,
-        interval: parseInt(formData.get('interval')?.toString() || '1'),
+        interval: parseInt(formData.get("interval")?.toString() || "1"),
       };
 
       // Add frequency-specific options
-      if (frequency === 'weekly') {
-        const dayOfWeek = formData.get('dayOfWeek')?.toString();
+      if (frequency === "weekly") {
+        const dayOfWeek = formData.get("dayOfWeek")?.toString();
         if (dayOfWeek) {
           recurrenceRule.dayOfWeek = parseInt(dayOfWeek);
         }
-      } else if (frequency === 'monthly' || frequency === 'yearly') {
-        const dayOfMonth = formData.get('dayOfMonth')?.toString();
+      } else if (frequency === "monthly" || frequency === "yearly") {
+        const dayOfMonth = formData.get("dayOfMonth")?.toString();
         if (dayOfMonth) {
           recurrenceRule.dayOfMonth = parseInt(dayOfMonth);
         }
       }
 
-      const typeValue = formData.get('type')?.toString();
-      const amountValue = formData.get('amount')?.toString();
-      const groupIdValue = formData.get('groupId')?.toString();
+      const typeValue = formData.get("type")?.toString();
+      const amountValue = formData.get("amount")?.toString();
+      const groupIdValue = formData.get("groupId")?.toString();
 
       if (!typeValue || !amountValue) {
-        showToast('Please fill in all required fields', 'error');
+        window.showToast("Please fill in all required fields", "error");
         // Reset button state
-        submitText.classList.remove('hidden');
-        loadingSpinner.classList.add('hidden');
+        submitText.classList.remove("hidden");
+        loadingSpinner.classList.add("hidden");
         submitButton.disabled = false;
         return;
       }
@@ -318,57 +351,50 @@ const groupsJson = JSON.stringify(groups);
       const data = {
         type: typeValue,
         amount: parseFloat(amountValue),
-        description: formData.get('description')?.toString() || '',
+        description: formData.get("description")?.toString() || "",
         groupId: groupIdValue ? parseInt(groupIdValue) : undefined,
-        startDate: formData.get('startDate')?.toString() || new Date().toISOString().split('T')[0],
+        startDate:
+          formData.get("startDate")?.toString() ||
+          new Date().toISOString().split("T")[0],
         recurrenceRule,
       };
 
       try {
-        const response = await fetch('/api/recurring-transactions', {
-          method: 'POST',
+        const response = await fetch("/api/recurring-transactions", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
         });
 
         if (response.ok) {
-          showToast('Recurring transaction created successfully', 'success');
+          window.showToast(
+            "Recurring transaction created successfully",
+            "success",
+          );
           // Delay redirect to show the success message
           setTimeout(() => {
-            window.location.href = '/recurring-transactions';
+            window.location.href = "/recurring-transactions";
           }, 1000);
         } else {
           const error = await response.json();
-          showToast(error.error || 'Failed to create recurring transaction', 'error');
+          window.showToast(
+            error.error || "Failed to create recurring transaction",
+            "error",
+          );
           // Reset button state
-          submitText.classList.remove('hidden');
-          loadingSpinner.classList.add('hidden');
+          submitText.classList.remove("hidden");
+          loadingSpinner.classList.add("hidden");
           submitButton.disabled = false;
         }
       } catch (error) {
-        showToast('Failed to create recurring transaction', 'error');
+        window.showToast("Failed to create recurring transaction", "error");
         // Reset button state
-        submitText.classList.remove('hidden');
-        loadingSpinner.classList.add('hidden');
+        submitText.classList.remove("hidden");
+        loadingSpinner.classList.add("hidden");
         submitButton.disabled = false;
       }
     });
-  }
-
-  // Toast function
-  function showToast(message, type = 'info', duration = 3000) {
-    const toast = document.getElementById('toast');
-    const toastMessage = document.getElementById('toastMessage');
-    if (!toast || !toastMessage) return;
-
-    toastMessage.textContent = message;
-    toast.classList.remove('translate-x-full');
-
-    // Auto hide after duration
-    setTimeout(() => {
-      toast.classList.add('translate-x-full');
-    }, duration);
   }
 </script>

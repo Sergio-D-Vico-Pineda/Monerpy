@@ -6,33 +6,33 @@ import { prisma } from "@prisma/index.js";
 import Toast from "../../../components/Toast.astro";
 
 if (!isAuthenticated(Astro.request)) {
-    return Astro.redirect("/login");
+  return Astro.redirect("/login");
 }
 
 const userId = getCurrentUserId(Astro.request);
 if (!userId) {
-    return Astro.redirect("/login");
+  return Astro.redirect("/login");
 }
 
 // Get transaction ID from URL
 const id = Number(Astro.params.id);
 if (isNaN(id)) {
-    return Astro.redirect("/recurring-transactions");
+  return Astro.redirect("/recurring-transactions");
 }
 
 // Get the recurring transaction
 const recurringTransaction = await recurringTransactionService.getById(
-    id,
-    userId,
+  id,
+  userId,
 );
 if (!recurringTransaction) {
-    return Astro.redirect("/recurring-transactions");
+  return Astro.redirect("/recurring-transactions");
 }
 
 // Get groups for the form
 const groups = await prisma.transactionGroup.findMany({
-    where: { userId, softDeleted: false },
-    select: { id: true, name: true, type: true },
+  where: { userId, softDeleted: false },
+  select: { id: true, name: true, type: true },
 });
 
 // Parse recurrence rule
@@ -40,11 +40,11 @@ const recurrenceRule = JSON.parse(recurringTransaction.recurrenceRule);
 
 // Pass data to frontend
 const data = {
-    groups,
-    transaction: {
-        ...recurringTransaction,
-        recurrenceRule,
-    },
+  groups,
+  transaction: {
+    ...recurringTransaction,
+    recurrenceRule,
+  },
 };
 ---
 
@@ -100,9 +100,7 @@ const data = {
 
         <!-- Amount -->
         <div class="space-y-2">
-          <label for="amount" class="block text-gray-300"
-            >Amount</label
-          >
+          <label for="amount" class="block text-gray-300">Amount</label>
           <input
             type="number"
             id="amount"
@@ -130,9 +128,7 @@ const data = {
 
         <!-- Group Selection -->
         <div class="space-y-2">
-          <label for="groupId" class="block text-gray-300"
-            >Category</label
-          >
+          <label for="groupId" class="block text-gray-300">Category</label>
           <select
             id="groupId"
             name="groupId"
@@ -143,9 +139,7 @@ const data = {
               groups.map((group) => (
                 <option
                   value={group.id}
-                  selected={
-                    group.id === data.transaction.groupId
-                  }
+                  selected={group.id === data.transaction.groupId}
                 >
                   {group.name}
                 </option>
@@ -156,9 +150,7 @@ const data = {
 
         <!-- Start Date -->
         <div class="space-y-2">
-          <label for="startDate" class="block text-gray-300"
-            >Start Date</label
-          >
+          <label for="startDate" class="block text-gray-300">Start Date</label>
           <input
             type="date"
             id="startDate"
@@ -174,9 +166,7 @@ const data = {
         <!-- Frequency -->
         <div class="space-y-4">
           <div>
-            <label for="frequency" class="block text-gray-300"
-              >Frequency</label
-            >
+            <label for="frequency" class="block text-gray-300">Frequency</label>
             <select
               id="frequency"
               name="frequency"
@@ -185,53 +175,47 @@ const data = {
             >
               <option
                 value="daily"
-                selected={data.transaction.recurrenceRule
-                  .frequency === "daily"}>Daily</option
+                selected={data.transaction.recurrenceRule.frequency === "daily"}
+                >Daily</option
               >
               <option
                 value="weekly"
-                selected={data.transaction.recurrenceRule
-                  .frequency === "weekly"}>Weekly</option
+                selected={data.transaction.recurrenceRule.frequency ===
+                  "weekly"}>Weekly</option
               >
               <option
                 value="monthly"
-                selected={data.transaction.recurrenceRule
-                  .frequency === "monthly"}>Monthly</option
+                selected={data.transaction.recurrenceRule.frequency ===
+                  "monthly"}>Monthly</option
               >
               <option
                 value="yearly"
-                selected={data.transaction.recurrenceRule
-                  .frequency === "yearly"}>Yearly</option
+                selected={data.transaction.recurrenceRule.frequency ===
+                  "yearly"}>Yearly</option
               >
             </select>
           </div>
 
           <!-- Interval -->
           <div>
-            <label for="interval" class="block text-gray-300"
-              >Every</label
-            >
+            <label for="interval" class="block text-gray-300">Every</label>
             <div class="flex items-center space-x-2">
               <input
                 type="number"
                 id="interval"
                 name="interval"
                 min="1"
-                value={data.transaction.recurrenceRule
-                  .interval || 1}
+                value={data.transaction.recurrenceRule.interval || 1}
                 required
                 class="w-24 px-4 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
               <span id="intervalLabel">
                 {
-                  data.transaction.recurrenceRule
-                    .frequency === "daily"
+                  data.transaction.recurrenceRule.frequency === "daily"
                     ? "days"
-                    : data.transaction.recurrenceRule
-                        .frequency === "weekly"
+                    : data.transaction.recurrenceRule.frequency === "weekly"
                       ? "weeks"
-                      : data.transaction.recurrenceRule
-                              .frequency === "monthly"
+                      : data.transaction.recurrenceRule.frequency === "monthly"
                         ? "months"
                         : "years"
                 }
@@ -245,15 +229,11 @@ const data = {
             class:list={[
               "space-y-2",
               {
-                hidden:
-                  data.transaction.recurrenceRule
-                    .frequency !== "weekly",
+                hidden: data.transaction.recurrenceRule.frequency !== "weekly",
               },
             ]}
           >
-            <label for="dayOfWeek" class="block text-gray-300"
-              >On day</label
-            >
+            <label for="dayOfWeek" class="block text-gray-300">On day</label>
             <select
               id="dayOfWeek"
               name="dayOfWeek"
@@ -261,38 +241,38 @@ const data = {
             >
               <option
                 value="0"
-                selected={data.transaction.recurrenceRule
-                  .dayOfWeek === 0}>Sunday</option
+                selected={data.transaction.recurrenceRule.dayOfWeek === 0}
+                >Sunday</option
               >
               <option
                 value="1"
-                selected={data.transaction.recurrenceRule
-                  .dayOfWeek === 1}>Monday</option
+                selected={data.transaction.recurrenceRule.dayOfWeek === 1}
+                >Monday</option
               >
               <option
                 value="2"
-                selected={data.transaction.recurrenceRule
-                  .dayOfWeek === 2}>Tuesday</option
+                selected={data.transaction.recurrenceRule.dayOfWeek === 2}
+                >Tuesday</option
               >
               <option
                 value="3"
-                selected={data.transaction.recurrenceRule
-                  .dayOfWeek === 3}>Wednesday</option
+                selected={data.transaction.recurrenceRule.dayOfWeek === 3}
+                >Wednesday</option
               >
               <option
                 value="4"
-                selected={data.transaction.recurrenceRule
-                  .dayOfWeek === 4}>Thursday</option
+                selected={data.transaction.recurrenceRule.dayOfWeek === 4}
+                >Thursday</option
               >
               <option
                 value="5"
-                selected={data.transaction.recurrenceRule
-                  .dayOfWeek === 5}>Friday</option
+                selected={data.transaction.recurrenceRule.dayOfWeek === 5}
+                >Friday</option
               >
               <option
                 value="6"
-                selected={data.transaction.recurrenceRule
-                  .dayOfWeek === 6}>Saturday</option
+                selected={data.transaction.recurrenceRule.dayOfWeek === 6}
+                >Saturday</option
               >
             </select>
           </div>
@@ -321,9 +301,7 @@ const data = {
                   <option
                     value={i + 1}
                     selected={
-                      data.transaction.recurrenceRule
-                        .dayOfMonth ===
-                      i + 1
+                      data.transaction.recurrenceRule.dayOfMonth === i + 1
                     }
                   >
                     {i + 1}
@@ -342,9 +320,24 @@ const data = {
           >
             <span class="submit-text">Update Recurring Transaction</span>
             <span class="loading-spinner hidden ml-2">
-              <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <svg
+                class="animate-spin h-5 w-5"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
               </svg>
             </span>
           </button>
@@ -355,7 +348,7 @@ const data = {
   <Toast />
 </Layout>
 
-<script define:vars={{ data }}>
+<script is:inline define:vars={{ data }}>
   const form = document.getElementById("transactionForm");
   const frequencySelect = document.getElementById("frequency");
   const intervalLabel = document.getElementById("intervalLabel");
@@ -408,11 +401,8 @@ const data = {
 
         options.forEach((option) => {
           if (option.value === "") return; // Skip "No category" option
-          const group = groups.find(
-            (g) => g.id === parseInt(option.value),
-          );
-          option.style.display =
-            !group || group.type === type ? "" : "none";
+          const group = groups.find((g) => g.id === parseInt(option.value));
+          option.style.display = !group || group.type === type ? "" : "none";
         });
 
         // Reset selection if current selection is not valid for new type
@@ -427,22 +417,22 @@ const data = {
   }
 
   if (form instanceof HTMLFormElement) {
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const submitButton = document.getElementById('submitButton');
-      const submitText = submitButton?.querySelector('.submit-text');
-      const loadingSpinner = submitButton?.querySelector('.loading-spinner');
+      const submitButton = document.getElementById("submitButton");
+      const submitText = submitButton?.querySelector(".submit-text");
+      const loadingSpinner = submitButton?.querySelector(".loading-spinner");
       if (!submitButton || !submitText || !loadingSpinner) return;
 
       // Show loading state
-      submitText.classList.add('hidden');
-      loadingSpinner.classList.remove('hidden');
+      submitText.classList.add("hidden");
+      loadingSpinner.classList.remove("hidden");
       submitButton.disabled = true;
 
       const formData = new FormData(form);
-      const frequency = formData.get('frequency')?.toString() || 'monthly';
-      
+      const frequency = formData.get("frequency")?.toString() || "monthly";
+
       const recurrenceRule = {
         frequency,
         interval: parseInt(formData.get("interval")?.toString() || "1"),
@@ -461,14 +451,14 @@ const data = {
         }
       }
 
-      const typeValue = formData.get('type')?.toString();
-      const amountValue = formData.get('amount')?.toString();
+      const typeValue = formData.get("type")?.toString();
+      const amountValue = formData.get("amount")?.toString();
 
       if (!typeValue || !amountValue) {
-        showToast('Please fill in all required fields', 'error');
+        window.showToast("Please fill in all required fields", "error");
         // Reset button state
-        submitText.classList.remove('hidden');
-        loadingSpinner.classList.add('hidden');
+        submitText.classList.remove("hidden");
+        loadingSpinner.classList.add("hidden");
         submitButton.disabled = false;
         return;
       }
@@ -483,56 +473,50 @@ const data = {
       };
 
       try {
-        const response = await fetch(`/api/recurring-transactions/${data.transaction.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
+        const response = await fetch(
+          `/api/recurring-transactions/${data.transaction.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(updateData),
           },
-          body: JSON.stringify(updateData),
-        });
+        );
 
         if (response.ok) {
-          showToast('Recurring transaction updated successfully', 'success');
+          window.showToast(
+            "Recurring transaction updated successfully",
+            "success",
+          );
           // Delay redirect to show the success message
           setTimeout(() => {
-            window.location.href = '/recurring-transactions';
+            window.location.href = "/recurring-transactions";
           }, 1000);
         } else {
           const error = await response.json();
-          showToast(error.error || 'Failed to update recurring transaction', 'error');
+          window.showToast(
+            error.error || "Failed to update recurring transaction",
+            "error",
+          );
           // Reset button state
-          submitText.classList.remove('hidden');
-          loadingSpinner.classList.add('hidden');
+          submitText.classList.remove("hidden");
+          loadingSpinner.classList.add("hidden");
           submitButton.disabled = false;
         }
       } catch (error) {
-        showToast('Failed to update recurring transaction', 'error');
+        window.showToast("Failed to update recurring transaction", "error");
         // Reset button state
-        submitText.classList.remove('hidden');
-        loadingSpinner.classList.add('hidden');
+        submitText.classList.remove("hidden");
+        loadingSpinner.classList.add("hidden");
         submitButton.disabled = false;
       }
     });
   }
 
-  // Toast function
-  function showToast(message, type = 'info', duration = 3000) {
-    const toast = document.getElementById('toast');
-    const toastMessage = document.getElementById('toastMessage');
-    if (!toast || !toastMessage) return;
-
-    toastMessage.textContent = message;
-    toast.classList.remove('translate-x-full');
-
-    // Auto hide after duration
-    setTimeout(() => {
-      toast.classList.add('translate-x-full');
-    }, duration);
-  }
-
   // Initial type change to set up group visibility
   const initialType = document.querySelector('input[name="type"]:checked');
   if (initialType instanceof HTMLInputElement) {
-    initialType.dispatchEvent(new Event('change'));
+    initialType.dispatchEvent(new Event("change"));
   }
 </script>
