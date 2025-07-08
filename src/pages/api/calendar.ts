@@ -8,7 +8,7 @@ export const GET: APIRoute = async ({ request }) => {
             return new Response(JSON.stringify({ error: 'Not authenticated' }), { status: 401 });
         }
 
-        const session = await getSession(request);
+        const session = getSession(request);
         if (!session?.userId) {
             return new Response(JSON.stringify({ error: 'Not authenticated' }), { status: 401 });
         }
