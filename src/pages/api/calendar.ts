@@ -1,6 +1,5 @@
 import type { APIRoute } from 'astro';
 import { isAuthenticated, getSession } from '@midd/auth.ts';
-import { transactionService } from '@lib/services/transaction';
 import { prisma } from '@prisma/index.js';
 
 export const GET: APIRoute = async ({ request }) => {
@@ -22,49 +21,40 @@ export const GET: APIRoute = async ({ request }) => {
             return new Response(JSON.stringify({ error: 'Invalid month or year' }), { status: 400 });
         }
 
-        // Get both calendar events and monthly summary in parallel
-        const [events, summary] = await Promise.all([
-            prisma.transaction.findMany({
-                where: {
-                    userId: session.userId,
-                    softDeleted: false,
-                    transactionDate: {
-                        gte: new Date(year, month - 1, 1),
-                        lte: new Date(year, month, 0, 23, 59, 59)
-                    }
-                },
-                select: {
-                    id: true,
-                    amount: true,
-                    description: true,
-                    type: true,
-                    transactionDate: true
+        // Get calendar events
+        const events = await prisma.transaction.findMany({
+            where: {
+                userId: session.userId,
+                softDeleted: false,
+                transactionDate: {
+                    gte: new Date(year, month - 1, 1),
+                    lte: new Date(year, month, 0, 23, 59, 59)
                 }
-            }),
-            transactionService.calculateMonthSummary(session.userId, month, year)
-        ]);
+            },
+            select: {
+                id: true,
+                amount: true,
+                description: true,
+                type: true,
+                transactionDate: true
+            }
+        });
 
         // Transform the events into the format expected by the calendar
         const calendarEvents = events.map(event => ({
             id: event.id,
             title: event.description || `${event.type} transaction`,
             date: event.transactionDate.toISOString().split('T')[0],
-            amount: event.amount.toNumber(),
             type: event.type,
-            isRecurring: false // We'll implement recurring transactions later
+            amount: event.amount.toNumber()
         }));
 
-        return new Response(JSON.stringify({
-            events: calendarEvents,
-            summary
-        }), {
+        return new Response(JSON.stringify({ events: calendarEvents }), {
             status: 200,
-            headers: {
-                'Content-Type': 'application/json'
-            }
+            headers: { 'Content-Type': 'application/json' }
         });
     } catch (error) {
-        console.error('Error in calendar endpoint:', error);
+        console.error('Error in calendar API:', error);
         return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
     }
 };

@@ -227,41 +227,6 @@ const transactionService = {
             ...summary,
             balance: summary.totalIncome - summary.totalExpense
         };
-    },
-
-    async calculateMonthSummary(userId: number, month: number, year: number): Promise<TransactionSummary> {
-        const startDate = new Date(year, month - 1, 1); // month is 0-based in Date constructor
-        const endDate = new Date(year, month, 0, 23, 59, 59); // Get last day of the month
-
-        const transactions = await prisma.transaction.findMany({
-            where: {
-                userId,
-                softDeleted: false,
-                transactionDate: {
-                    gte: startDate,
-                    lte: endDate
-                }
-            },
-            select: {
-                type: true,
-                amount: true
-            }
-        });
-
-        const summary = transactions.reduce((acc: { totalIncome: number, totalExpense: number }, transaction) => {
-            const amount = transaction.amount.toNumber();
-            if (transaction.type === 'income') {
-                acc.totalIncome += amount;
-            } else {
-                acc.totalExpense += amount;
-            }
-            return acc;
-        }, { totalIncome: 0, totalExpense: 0 });
-
-        return {
-            ...summary,
-            balance: summary.totalIncome - summary.totalExpense
-        };
     }
 };
 
