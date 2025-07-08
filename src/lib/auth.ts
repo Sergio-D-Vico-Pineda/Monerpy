@@ -1,4 +1,4 @@
-import { isAuthenticated, getSession } from "../middleware/auth.ts";
+import { isAuthenticated, getSession } from "@midd/auth.ts";
 import type { Session } from "../types/types";
 import { prisma } from "@prisma/index.js";
 import { compare } from "bcryptjs";

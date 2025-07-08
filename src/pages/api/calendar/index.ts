@@ -1,6 +1,6 @@
 import { prisma } from "@prisma/index.js";
 import type { APIRoute } from "astro";
-import { isAuthenticated, getCurrentUserId } from "../../../middleware/auth";
+import { isAuthenticated, getCurrentUserId } from "@midd/auth";
 
 interface CalendarEvent {
     id: number;

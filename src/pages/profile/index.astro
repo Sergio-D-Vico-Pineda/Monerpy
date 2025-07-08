@@ -1,7 +1,7 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import { isAuthenticated, getCurrentUserId } from "../../middleware/auth";
-import { userService } from "../../lib/services/user";
+import { isAuthenticated, getCurrentUserId } from "@midd/auth";
+import { userService } from "@lib/services/user";
 
 if (!isAuthenticated(Astro.request)) {
     return Astro.redirect("/login");

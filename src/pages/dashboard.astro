@@ -1,6 +1,6 @@
 ---
 import Layout from "@layouts/Layout.astro";
-import { isAuthenticated } from "../middleware/auth.ts";
+import { isAuthenticated } from "@midd/auth.ts";
 
 if (!isAuthenticated(Astro.request)) {
   console.log(

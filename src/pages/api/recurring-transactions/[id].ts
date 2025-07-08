@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { isAuthenticated, getCurrentUserId } from "../../../middleware/auth";
+import { isAuthenticated, getCurrentUserId } from "@midd/auth";
 import { recurringTransactionService } from "@lib/services/recurring-transaction";
 
 export const GET: APIRoute = async ({ request, params }) => {

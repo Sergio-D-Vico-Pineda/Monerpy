@@ -14,7 +14,7 @@
       "@/*": [
         "src/*"
       ],
-      "@components/*": [
+      "@comps/*": [
         "src/components/*"
       ],
       "@layouts/*": [
@@ -29,6 +29,9 @@
       "@lib/*": [
         "src/lib/*"
       ],
+      "@midd/*": [
+        "src/middleware/*"
+      ]
     }
   }
 }

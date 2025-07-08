@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
-import { isAuthenticated, getCurrentUserId } from "../../../middleware/auth";
-import { transactionGroupService } from "../../../lib/services/transaction-group";
+import { isAuthenticated, getCurrentUserId } from "@midd/auth";
+import { transactionGroupService } from "@lib/services/transaction-group";
 
 export const GET: APIRoute = async ({ request }) => {
     if (!isAuthenticated(request)) {

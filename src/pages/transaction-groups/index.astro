@@ -1,7 +1,7 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import { isAuthenticated, getCurrentUserId } from "../../middleware/auth";
-import { transactionGroupService } from "../../lib/services/transaction-group";
+import { isAuthenticated, getCurrentUserId } from "@midd/auth";
+import { transactionGroupService } from "@lib/services/transaction-group";
 
 if (!isAuthenticated(Astro.request)) {
     return Astro.redirect("/login");

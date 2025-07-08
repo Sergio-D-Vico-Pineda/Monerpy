@@ -1,7 +1,7 @@
 ---
 import Layout from "@layouts/Layout.astro";
-import Toast from "@components/Toast.astro";
-import { isAuthenticated, getCurrentUserId } from "../../../middleware/auth";
+import Toast from "@comps/Toast.astro";
+import { isAuthenticated, getCurrentUserId } from "@midd/auth";
 import { prisma } from "@prisma/index.js";
 
 if (!isAuthenticated(Astro.request)) {

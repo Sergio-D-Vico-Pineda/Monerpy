@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
-import { getCurrentUserId } from "../../../lib/auth";
-import { userService } from "../../../lib/services/user";
+import { getCurrentUserId } from "@lib/auth";
+import { userService } from "@lib/services/user";
 
 export const PUT: APIRoute = async ({ request }) => {
     try {

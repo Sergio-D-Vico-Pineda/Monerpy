@@ -1,7 +1,7 @@
 ---
 import Layout from "@layouts/Layout.astro";
-import Toast from "@components/Toast.astro";
-import { isAuthenticated } from "../middleware/auth.ts";
+import Toast from "@comps/Toast.astro";
+import { isAuthenticated } from "@midd/auth.ts";
 
 if (isAuthenticated(Astro.request)) {
   console.log(
