@@ -68,15 +68,15 @@ if (!isAuthenticated(Astro.request)) {
         <div class="space-y-2" id="monthOverview">
           <p class="flex justify-between items-baseline">
             <span>Income this month:</span>
-            <span class="text-xl text-green-500" data-monthly-income>$0.00</span>
+            <span class="text-xl text-green-500" data-monthly-income>0,00 €</span>
           </p>
           <p class="flex justify-between items-baseline">
             <span>Expenses this month:</span>
-            <span class="text-xl text-red-500" data-monthly-expense>$0.00</span>
+            <span class="text-xl text-red-500" data-monthly-expense>0,00 €</span>
           </p>
           <p class="flex justify-between items-baseline">
             <span>Balance this month:</span>
-            <span class="text-xl text-blue-500" data-monthly-balance>$0.00</span>
+            <span class="text-xl text-blue-500" data-monthly-balance>0,00 €</span>
           </p>
         </div>
       </article>
@@ -87,18 +87,26 @@ if (!isAuthenticated(Astro.request)) {
           Quick Actions
         </h2>
         <div class="space-y-3">
-          <div class="flex space-x-3">
+          <div class="flex w-full justify-between space-x-3">
+            <div class="grow flex justify-between w-full space-x-3">
+              <a
+                href="/transactions/new"
+                class="grow text-nowrap block py-2 px-4 bg-green-600 text-white rounded hover:bg-green-700 transition duration-200 text-center"
+              >
+                Add Income
+              </a>
+              <a
+                href="/transactions/new"
+                class="grow text-nowrap block py-2 px-4 bg-red-600 text-white rounded hover:bg-red-700 transition duration-200 text-center"
+              >
+                Add Expense
+              </a>
+            </div>
             <a
-              href="/transactions/new"
-              class="flex-1 py-2 px-4 bg-green-600 text-white rounded hover:bg-green-700 transition duration-200 text-center"
+              href="/transaction-groups/new"
+              class="shrink text-nowrap block py-2 px-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200 text-center"
             >
-              Add Income
-            </a>
-            <a
-              href="/transactions/new"
-              class="flex-1 py-2 px-4 bg-red-600 text-white rounded hover:bg-red-700 transition duration-200 text-center"
-            >
-              Add Expense
+              New Group
             </a>
           </div>
           <a
@@ -126,7 +134,10 @@ if (!isAuthenticated(Astro.request)) {
           >
             &lt;
           </button>
-          <span id="currentMonth" class="text-lg font-medium text-white min-w-[160px] text-center"></span>
+          <span
+            id="currentMonth"
+            class="text-lg font-medium text-white min-w-[160px] text-center"
+          ></span>
           <button
             id="nextMonth"
             class="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200"
@@ -147,8 +158,7 @@ if (!isAuthenticated(Astro.request)) {
               <path
                 fill-rule="evenodd"
                 d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
-                clip-rule="evenodd"
-              ></path>
+                clip-rule="evenodd"></path>
             </svg>
           </button>
           <button
@@ -165,8 +175,7 @@ if (!isAuthenticated(Astro.request)) {
               <path
                 fill-rule="evenodd"
                 d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                clip-rule="evenodd"
-              ></path>
+                clip-rule="evenodd"></path>
             </svg>
           </button>
         </div>
@@ -185,209 +194,229 @@ if (!isAuthenticated(Astro.request)) {
   </main>
 
   <script>
-  interface CalendarEvent {
-    id: number;
-    title: string;
-    date: string;
-    type: 'income' | 'expense';
-    amount: number;
-  }
-
-  interface MonthSummary {
-    totalIncome: number;
-    totalExpense: number;
-    balance: number;
-  }
-
-  // Summary calculation function
-  function calculateMonthSummary(events: CalendarEvent[]): MonthSummary {
-    const summary = events.reduce(
-      (acc: MonthSummary, event: CalendarEvent) => {
-        const amount = event.amount;
-        if (event.type === 'income') {
-          acc.totalIncome += amount;
-        } else if (event.type === 'expense') {
-          acc.totalExpense += amount;
-        }
-        acc.balance = acc.totalIncome - acc.totalExpense;
-        return acc;
-      },
-      { totalIncome: 0, totalExpense: 0, balance: 0 }
-    );
-    return summary;
-  }
-
-  // Cache management
-  const cache = new Map<string, { events: CalendarEvent[] }>();
-  const clearCacheBtn = document.getElementById('clearCache');
-  if (clearCacheBtn) {
-    clearCacheBtn.addEventListener('click', () => {
-      cache.clear();
-      loadCurrentMonth();
-    });
-  }
-
-  // Calendar functionality
-  const prevMonthBtn = document.getElementById('prevMonth');
-  const nextMonthBtn = document.getElementById('nextMonth');
-  const monthDisplay = document.getElementById('currentMonth');
-  const calendarGrid = document.getElementById('calendar-grid');
-  // const monthOverview = document.getElementById('monthOverview');
-  const refreshBtn = document.getElementById('refreshMonth');
-
-  let currentDate = new Date();
-
-  // Format currency
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
-
-  // Update month overview with calculated summary
-  const updateMonthOverview = (summary: MonthSummary): void => {
-    const incomeElement = document.querySelector('[data-monthly-income]');
-    const expenseElement = document.querySelector('[data-monthly-expense]');
-    const balanceElement = document.querySelector('[data-monthly-balance]');
-
-    if (incomeElement) {
-      incomeElement.textContent = formatCurrency(summary.totalIncome);
-    }
-    if (expenseElement) {
-      expenseElement.textContent = formatCurrency(summary.totalExpense);
-    }
-    if (balanceElement) {
-      balanceElement.textContent = formatCurrency(summary.balance);
-    }
-  };
-
-  // Load month data from cache or API
-  async function loadMonth(year: number, month: number): Promise<void> {
-    const cacheKey = `${year}-${month}`;
-    if (cache.has(cacheKey)) {
-      const data = cache.get(cacheKey)!;
-      updateCalendar(data.events);
-      updateMonthOverview(calculateMonthSummary(data.events));
-      return;
+    interface CalendarEvent {
+      id: number;
+      title: string;
+      date: string;
+      type: "income" | "expense";
+      amount: number;
     }
 
-    try {
-      const response = await fetch(`/api/calendar?year=${year}&month=${month}`);
-      if (!response.ok) throw new Error('Failed to fetch calendar data');
-      
-      const data = await response.json();
-      cache.set(cacheKey, data);
-      
-      updateCalendar(data.events);
-      updateMonthOverview(calculateMonthSummary(data.events));
-    } catch (error) {
-      console.error('Error loading calendar data:', error);
-    }
-  }
-
-  // Update calendar UI
-  function updateCalendar(events: CalendarEvent[]): void {
-    if (!calendarGrid) return;
-
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    
-    // Get first day of month and total days
-    const firstDay = new Date(year, month, 1).getDay();
-    const lastDay = new Date(year, month + 1, 0).getDate();
-    let startingDay = firstDay - 1; // Convert to Monday-based
-    if (startingDay === -1) startingDay = 6; // If Sunday, make it last day
-
-    // Create calendar grid
-    const cells: string[] = [];
-
-    // Add empty cells for the days before the first day of the month
-    for (let i = 0; i < startingDay; i++) {
-      cells.push('<div class="p-2 bg-gray-700 rounded-lg min-h-[100px]"></div>');
+    interface MonthSummary {
+      totalIncome: number;
+      totalExpense: number;
+      balance: number;
     }
 
-    // Add cells for each day of the month
-    for (let day = 1; day <= lastDay; day++) {
-      const currentDateISO = new Date(year, month, day).toISOString().split('T')[0];
-      const dayEvents = events.filter(event => event.date === currentDateISO);
+    // Summary calculation function
+    function calculateMonthSummary(events: CalendarEvent[]): MonthSummary {
+      const summary = events.reduce(
+        (acc: MonthSummary, event: CalendarEvent) => {
+          const amount = event.amount;
+          if (event.type === "income") {
+            acc.totalIncome += amount;
+          } else if (event.type === "expense") {
+            acc.totalExpense += amount;
+          }
+          acc.balance = acc.totalIncome - acc.totalExpense;
+          return acc;
+        },
+        { totalIncome: 0, totalExpense: 0, balance: 0 },
+      );
+      return summary;
+    }
 
-      let cellContent = `<div class="p-2 bg-gray-700 rounded-lg min-h-[100px] relative">
+    // Cache management
+    const cache = new Map<string, { events: CalendarEvent[] }>();
+    const clearCacheBtn = document.getElementById("clearCache");
+    if (clearCacheBtn) {
+      clearCacheBtn.addEventListener("click", () => {
+        cache.clear();
+        loadCurrentMonth();
+      });
+    }
+
+    // Calendar functionality
+    const prevMonthBtn = document.getElementById("prevMonth");
+    const nextMonthBtn = document.getElementById("nextMonth");
+    const monthDisplay = document.getElementById("currentMonth");
+    const calendarGrid = document.getElementById("calendar-grid");
+    // const monthOverview = document.getElementById('monthOverview');
+    const refreshBtn = document.getElementById("refreshMonth");
+
+    let currentDate = new Date();
+
+    // Format currency
+    const formatCurrency = (amount: number): string => {
+      return new Intl.NumberFormat("es-ES", {
+        style: "currency",
+        currency: "EUR",
+      }).format(amount);
+    };
+
+    // Update month overview with calculated summary
+    const updateMonthOverview = (summary: MonthSummary): void => {
+      const incomeElement = document.querySelector("[data-monthly-income]");
+      const expenseElement = document.querySelector("[data-monthly-expense]");
+      const balanceElement = document.querySelector("[data-monthly-balance]");
+
+      if (incomeElement) {
+        incomeElement.textContent = formatCurrency(summary.totalIncome);
+      }
+      if (expenseElement) {
+        expenseElement.textContent = formatCurrency(summary.totalExpense);
+      }
+      if (balanceElement) {
+        balanceElement.textContent = formatCurrency(summary.balance);
+      }
+    };
+
+    // Load month data from cache or API
+    async function loadMonth(year: number, month: number): Promise<void> {
+      const cacheKey = `${year}-${month}`;
+      if (cache.has(cacheKey)) {
+        const data = cache.get(cacheKey)!;
+        updateCalendar(data.events);
+        updateMonthOverview(calculateMonthSummary(data.events));
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `/api/calendar?year=${year}&month=${month}`,
+        );
+        if (!response.ok) throw new Error("Failed to fetch calendar data");
+
+        const data = await response.json();
+        cache.set(cacheKey, data);
+
+        updateCalendar(data.events);
+        updateMonthOverview(calculateMonthSummary(data.events));
+      } catch (error) {
+        console.error("Error loading calendar data:", error);
+      }
+    }
+
+    // Update calendar UI
+    function updateCalendar(events: CalendarEvent[]): void {
+      if (!calendarGrid) return;
+
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+
+      // Get first day of month and total days
+      const firstDay = new Date(year, month, 1).getDay();
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      let startingDay = firstDay - 1; // Convert to Monday-based
+      if (startingDay === -1) startingDay = 6; // If Sunday, make it last day
+
+      // Create calendar grid
+      const cells: string[] = [];
+
+      // Add empty cells for the days before the first day of the month
+      for (let i = 0; i < startingDay; i++) {
+        cells.push(
+          '<div class="p-2 bg-gray-700 rounded-lg min-h-[100px]"></div>',
+        );
+      }
+
+      // Add cells for each day of the month
+      for (let day = 1; day <= lastDay; day++) {
+        const currentDateISO = new Date(year, month, day)
+          .toISOString()
+          .split("T")[0];
+        const dayEvents = events.filter(
+          (event) => event.date === currentDateISO,
+        );
+
+        let cellContent = `<div class="p-2 bg-gray-700 rounded-lg min-h-[100px] relative">
         <div class="absolute top-1 right-2 text-gray-400">${day}</div>`;
 
-      if (dayEvents.length > 0) {
-        cellContent += '<div class="mt-6 space-y-1">';
-        dayEvents.forEach(event => {
-          cellContent += `
+        if (dayEvents.length > 0) {
+          cellContent += '<div class="mt-6 space-y-1">';
+          dayEvents.forEach((event) => {
+            cellContent += `
             <a href="/transactions/${event.id}/edit" 
-               class="block text-sm p-1 rounded ${event.type === 'income' ? 'text-green-400 hover:bg-green-900/30' : 'text-red-400 hover:bg-red-900/30'} hover:no-underline transition-colors">
+               class="block text-sm p-1 rounded ${event.type === "income" ? "text-green-400 hover:bg-green-900/30" : "text-red-400 hover:bg-red-900/30"} hover:no-underline transition-colors">
               ${formatCurrency(event.amount)}
-              ${event.title ? `<br><span class="text-xs text-gray-400">${event.title}</span>` : ''}
+              ${event.title ? `<br><span class="text-xs text-gray-400">${event.title}</span>` : ""}
             </a>`;
-        });
-        cellContent += '</div>';
+          });
+          cellContent += "</div>";
+        }
+
+        cellContent += "</div>";
+        cells.push(cellContent);
       }
 
-      cellContent += '</div>';
-      cells.push(cellContent);
-    }
-
-    // Add empty cells for the remaining days to complete the grid
-    const totalCells = startingDay + lastDay;
-    const remainingCells = 7 - (totalCells % 7);
-    if (remainingCells < 7) {
-      for (let i = 0; i < remainingCells; i++) {
-        cells.push('<div class="p-2 bg-gray-700 rounded-lg min-h-[100px]"></div>');
+      // Add empty cells for the remaining days to complete the grid
+      const totalCells = startingDay + lastDay;
+      const remainingCells = 7 - (totalCells % 7);
+      if (remainingCells < 7) {
+        for (let i = 0; i < remainingCells; i++) {
+          cells.push(
+            '<div class="p-2 bg-gray-700 rounded-lg min-h-[100px]"></div>',
+          );
+        }
       }
+
+      calendarGrid.innerHTML = cells.join("");
     }
 
-    calendarGrid.innerHTML = cells.join('');
-  }
+    // Navigation functions
+    function updateMonthDisplay(): void {
+      if (!monthDisplay) return;
+      const monthNames = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+      monthDisplay.textContent = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+    }
 
-  // Navigation functions
-  function updateMonthDisplay(): void {
-    if (!monthDisplay) return;
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    monthDisplay.textContent = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
-  }
+    // Add event listeners for navigation
+    if (prevMonthBtn) {
+      prevMonthBtn.addEventListener("click", () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        loadCurrentMonth();
+      });
+    }
 
-  // Add event listeners for navigation
-  if (prevMonthBtn) {
-    prevMonthBtn.addEventListener('click', () => {
-      currentDate.setMonth(currentDate.getMonth() - 1);
-      loadCurrentMonth();
-    });
-  }
+    if (nextMonthBtn) {
+      nextMonthBtn.addEventListener("click", () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        loadCurrentMonth();
+      });
+    }
 
-  if (nextMonthBtn) {
-    nextMonthBtn.addEventListener('click', () => {
-      currentDate.setMonth(currentDate.getMonth() + 1);
-      loadCurrentMonth();
-    });
-  }
+    if (refreshBtn) {
+      refreshBtn.addEventListener("click", async () => {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth() + 1;
+        const cacheKey = `${year}-${month}`;
+        cache.delete(cacheKey); // Remove just the current month from cache
+        await loadCurrentMonth();
+      });
+    }
 
-  if (refreshBtn) {
-    refreshBtn.addEventListener('click', async () => {
+    // Load current month
+    async function loadCurrentMonth(): Promise<void> {
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth() + 1;
-      const cacheKey = `${year}-${month}`;
-      cache.delete(cacheKey); // Remove just the current month from cache
-      await loadCurrentMonth();
-    });
-  }
+      updateMonthDisplay();
+      await loadMonth(year, month);
+    }
 
-  // Load current month
-  async function loadCurrentMonth(): Promise<void> {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth() + 1;
-    updateMonthDisplay();
-    await loadMonth(year, month);
-  }
-
-  // Initialize calendar when DOM is loaded
-  loadCurrentMonth();
+    // Initialize calendar when DOM is loaded
+    loadCurrentMonth();
   </script>
 </Layout>
