@@ -68,15 +68,20 @@ if (!isAuthenticated(Astro.request)) {
         <div class="space-y-2" id="monthOverview">
           <p class="flex justify-between items-baseline">
             <span>Income this month:</span>
-            <span class="text-xl text-green-500" data-monthly-income>0,00 €</span>
+            <span class="text-xl text-green-500" data-monthly-income
+              >0,00 €</span
+            >
           </p>
           <p class="flex justify-between items-baseline">
             <span>Expenses this month:</span>
-            <span class="text-xl text-red-500" data-monthly-expense>0,00 €</span>
+            <span class="text-xl text-red-500" data-monthly-expense>0,00 €</span
+            >
           </p>
           <p class="flex justify-between items-baseline">
             <span>Balance this month:</span>
-            <span class="text-xl text-blue-500" data-monthly-balance>0,00 €</span>
+            <span class="text-xl text-blue-500" data-monthly-balance
+              >0,00 €</span
+            >
           </p>
         </div>
       </article>
@@ -210,14 +215,17 @@ if (!isAuthenticated(Astro.request)) {
 
     // Summary calculation function
     function calculateMonthSummary(events: CalendarEvent[]): MonthSummary {
-      console.log('[calculateMonthSummary] Starting calculation with events:', events);
+      console.log(
+        "[calculateMonthSummary] Starting calculation with events:",
+        events,
+      );
       const summary = events.reduce(
         (acc: MonthSummary, event: CalendarEvent) => {
           console.log(`[calculateMonthSummary] Processing event:`, {
             id: event.id,
             type: event.type,
             amount: event.amount,
-            date: event.date
+            date: event.date,
           });
           const amount = event.amount;
           if (event.type === "income") {
@@ -230,61 +238,73 @@ if (!isAuthenticated(Astro.request)) {
         },
         { totalIncome: 0, totalExpense: 0, balance: 0 },
       );
-      console.log('[calculateMonthSummary] Final summary:', summary);
+      console.log("[calculateMonthSummary] Final summary:", summary);
       return summary;
     }
 
-    // Cache management with sessionStorage and expiration
-    const CACHE_KEY_PREFIX = 'calendar_cache_';
+    // Cache management with localStorage and expiration
+    const CACHE_KEY_PREFIX = "calendar_cache_";
     const CACHE_EXPIRATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-    
+
     interface CacheEntry {
       data: { events: CalendarEvent[] };
       timestamp: number;
     }
-    
+
     // Helper functions for cache management
-    const getCacheKey = (year: number, month: number) => `${CACHE_KEY_PREFIX}${year}-${month}`;
-    
-    const saveToCache = (year: number, month: number, data: { events: CalendarEvent[] }) => {
+    const getCacheKey = (year: number, month: number) =>
+      `${CACHE_KEY_PREFIX}${year}-${month}`;
+
+    const saveToCache = (
+      year: number,
+      month: number,
+      data: { events: CalendarEvent[] },
+    ) => {
       const key = getCacheKey(year, month);
       const cacheEntry: CacheEntry = {
         data,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
-      console.log(`[Cache] Saving data to sessionStorage for ${key}`, cacheEntry);
-      sessionStorage.setItem(key, JSON.stringify(cacheEntry));
+      console.log(`[Cache] Saving data to localStorage for ${key}`, cacheEntry);
+      localStorage.setItem(key, JSON.stringify(cacheEntry));
     };
-    
-    const getFromCache = (year: number, month: number): { events: CalendarEvent[] } | null => {
+
+    const getFromCache = (
+      year: number,
+      month: number,
+    ): { events: CalendarEvent[] } | null => {
       const key = getCacheKey(year, month);
-      const cached = sessionStorage.getItem(key);
-      
+      const cached = localStorage.getItem(key);
+
       if (cached) {
         const cacheEntry: CacheEntry = JSON.parse(cached);
         const now = Date.now();
         const age = now - cacheEntry.timestamp;
-        
+
         if (age < CACHE_EXPIRATION) {
-          console.log(`[Cache] Found valid data in sessionStorage for ${key} (age: ${Math.round(age / 1000 / 60)} minutes)`);
+          console.log(
+            `[Cache] Found valid data in localStorage for ${key} (age: ${Math.round(age / 1000 / 60)} minutes)`,
+          );
           return cacheEntry.data;
         } else {
-          console.log(`[Cache] Found expired data in sessionStorage for ${key} (age: ${Math.round(age / 1000 / 60)} minutes)`);
-          sessionStorage.removeItem(key);
+          console.log(
+            `[Cache] Found expired data in localStorage for ${key} (age: ${Math.round(age / 1000 / 60)} minutes)`,
+          );
+          localStorage.removeItem(key);
         }
       }
-      
-      console.log(`[Cache] No valid data in sessionStorage for ${key}`);
+
+      console.log(`[Cache] No valid data in localStorage for ${key}`);
       return null;
     };
-    
+
     const clearCache = () => {
-      console.log('[Cache] Clearing all calendar cache from sessionStorage');
-      Object.keys(sessionStorage)
-        .filter(key => key.startsWith(CACHE_KEY_PREFIX))
-        .forEach(key => sessionStorage.removeItem(key));
+      console.log("[Cache] Clearing all calendar cache from localStorage");
+      Object.keys(localStorage)
+        .filter((key) => key.startsWith(CACHE_KEY_PREFIX))
+        .forEach((key) => localStorage.removeItem(key));
     };
-    
+
     const clearCacheBtn = document.getElementById("clearCache");
     if (clearCacheBtn) {
       clearCacheBtn.addEventListener("click", () => {
@@ -328,10 +348,10 @@ if (!isAuthenticated(Astro.request)) {
       }
     };
 
-    // Load month data from sessionStorage cache or API
+    // Load month data from localStorage cache or API
     async function loadMonth(year: number, month: number): Promise<void> {
       console.log(`[loadMonth] Loading data for ${year}-${month}`);
-      
+
       const cachedData = getFromCache(year, month);
       if (cachedData) {
         console.log(`[loadMonth] Using cached events:`, cachedData.events);
@@ -341,7 +361,9 @@ if (!isAuthenticated(Astro.request)) {
       }
 
       try {
-        console.log(`[loadMonth] Fetching fresh data from API for ${year}-${month}`);
+        console.log(
+          `[loadMonth] Fetching fresh data from API for ${year}-${month}`,
+        );
         const response = await fetch(
           `/api/calendar?year=${year}&month=${month}`,
         );
@@ -350,9 +372,11 @@ if (!isAuthenticated(Astro.request)) {
           console.error(`[loadMonth] API Error Response:`, {
             status: response.status,
             statusText: response.statusText,
-            body: errorText
+            body: errorText,
           });
-          throw new Error(`Failed to fetch calendar data: ${response.status} ${response.statusText}`);
+          throw new Error(
+            `Failed to fetch calendar data: ${response.status} ${response.statusText}`,
+          );
         }
 
         const data = await response.json();
@@ -367,34 +391,36 @@ if (!isAuthenticated(Astro.request)) {
           message: err.message,
           stack: err.stack,
           year,
-          month
+          month,
         });
       }
     }
 
     // Update calendar UI
     function updateCalendar(events: CalendarEvent[]): void {
-      console.log('[updateCalendar] Starting calendar update');
+      console.log("[updateCalendar] Starting calendar update");
       if (!calendarGrid) {
-        console.error('[updateCalendar] Calendar grid element not found');
+        console.error("[updateCalendar] Calendar grid element not found");
         return;
       }
 
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth();
-      console.log(`[updateCalendar] Rendering calendar for ${year}-${month + 1}`);
+      console.log(
+        `[updateCalendar] Rendering calendar for ${year}-${month + 1}`,
+      );
 
       // Get first day of month and total days
       const firstDay = new Date(year, month, 1).getDay();
       const lastDay = new Date(year, month + 1, 0).getDate();
       let startingDay = firstDay - 1; // Convert to Monday-based
       if (startingDay === -1) startingDay = 6; // If Sunday, make it last day
-      
-      console.log('[updateCalendar] Calendar parameters:', {
+
+      console.log("[updateCalendar] Calendar parameters:", {
         firstDay,
         lastDay,
         startingDay,
-        totalEvents: events.length
+        totalEvents: events.length,
       });
 
       // Create calendar grid
@@ -473,24 +499,24 @@ if (!isAuthenticated(Astro.request)) {
     // Add event listeners for navigation
     if (prevMonthBtn) {
       prevMonthBtn.addEventListener("click", () => {
-        console.log('[Navigation] Moving to previous month');
+        console.log("[Navigation] Moving to previous month");
         currentDate.setMonth(currentDate.getMonth() - 1);
         // When navigating, we don't clear cache - we'll fetch only if needed
         loadCurrentMonth();
       });
     } else {
-      console.warn('[Navigation] Previous month button not found');
+      console.warn("[Navigation] Previous month button not found");
     }
 
     if (nextMonthBtn) {
       nextMonthBtn.addEventListener("click", () => {
-        console.log('[Navigation] Moving to next month');
+        console.log("[Navigation] Moving to next month");
         currentDate.setMonth(currentDate.getMonth() + 1);
         // When navigating, we don't clear cache - we'll fetch only if needed
         loadCurrentMonth();
       });
     } else {
-      console.warn('[Navigation] Next month button not found');
+      console.warn("[Navigation] Next month button not found");
     }
 
     if (refreshBtn) {
@@ -498,12 +524,12 @@ if (!isAuthenticated(Astro.request)) {
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth() + 1;
         console.log(`[Refresh] Forcing refresh for ${year}-${month}`);
-        // Remove this month from sessionStorage to force a fresh fetch
-        sessionStorage.removeItem(getCacheKey(year, month));
+        // Remove this month from localStorage to force a fresh fetch
+        localStorage.removeItem(getCacheKey(year, month));
         await loadCurrentMonth();
       });
     } else {
-      console.warn('[Navigation] Refresh button not found');
+      console.warn("[Navigation] Refresh button not found");
     }
 
     // Load current month
@@ -511,22 +537,26 @@ if (!isAuthenticated(Astro.request)) {
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth() + 1;
       console.log(`[loadCurrentMonth] Checking data for ${year}-${month}`);
-      
+
       // Update display first for better UX
       updateMonthDisplay();
-      
+
       // Check if we have cached data
       const cachedData = getFromCache(year, month);
-      
+
       if (cachedData) {
-        console.log(`[loadCurrentMonth] Using cached data for ${year}-${month}`);
+        console.log(
+          `[loadCurrentMonth] Using cached data for ${year}-${month}`,
+        );
         updateCalendar(cachedData.events);
         updateMonthOverview(calculateMonthSummary(cachedData.events));
         return;
       }
 
       // Only fetch from server if we don't have cached data
-      console.log(`[loadCurrentMonth] No cached data found for ${year}-${month}, fetching from server`);
+      console.log(
+        `[loadCurrentMonth] No cached data found for ${year}-${month}, fetching from server`,
+      );
       await loadMonth(year, month);
     }
 
