@@ -28,7 +28,7 @@ export const GET: APIRoute = async ({ request }) => {
                 softDeleted: false,
                 transactionDate: {
                     gte: new Date(year, month - 1, 1),
-                    lte: new Date(year, month, 0, 23, 59, 59)
+                    lte: new Date(Date.UTC(year, month, 0, 23, 59, 59))
                 }
             },
             select: {
