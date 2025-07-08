@@ -93,7 +93,7 @@ const groups = await prisma.transactionGroup.findMany({
                     </h3>
                     <p class="text-2xl text-green-500">
                         {
-                            summary.totalIncome.toLocaleString("en-US", {
+                            summary.totalIncome.toLocaleString("es-ES", {
                                 minimumFractionDigits: 2,
                             })
                         } €
@@ -105,7 +105,7 @@ const groups = await prisma.transactionGroup.findMany({
                     </h3>
                     <p class="text-2xl text-red-500">
                         {
-                            summary.totalExpense.toLocaleString("en-US", {
+                            summary.totalExpense.toLocaleString("es-ES", {
                                 minimumFractionDigits: 2,
                             })
                         } €
@@ -117,7 +117,7 @@ const groups = await prisma.transactionGroup.findMany({
                     </h3>
                     <p class="text-2xl text-blue-500">
                         {
-                            summary.balance.toLocaleString("en-US", {
+                            summary.balance.toLocaleString("es-ES", {
                                 minimumFractionDigits: 2,
                             })
                         } €
@@ -251,7 +251,7 @@ const groups = await prisma.transactionGroup.findMany({
                                     <td class="p-4 whitespace-nowrap">
                                         {new Date(
                                             transaction.transactionDate,
-                                        ).toLocaleString("en-US", {
+                                        ).toLocaleString("es-ES", {
                                             day: "numeric",
                                             month: "short",
                                             year: "numeric",
@@ -270,12 +270,12 @@ const groups = await prisma.transactionGroup.findMany({
                                                     : "text-red-500"
                                             }
                                         >
-                                            €
                                             {transaction.amount
                                                 .toNumber()
-                                                .toLocaleString("en-US", {
+                                                .toLocaleString("es-ES", {
                                                     minimumFractionDigits: 2,
                                                 })}
+                                            €
                                         </span>
                                     </td>
                                     <td class="p-4 capitalize">

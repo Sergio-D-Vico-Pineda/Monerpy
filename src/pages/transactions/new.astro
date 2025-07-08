@@ -428,7 +428,7 @@ const groups = await prisma.transactionGroup.findMany({
 
         if (previewAmount) {
             const amount = parseFloat(amountInput.value);
-            previewAmount.textContent = `€${amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+            previewAmount.textContent = `${amount.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €`;
             previewAmount.className =
                 typeInput.value === "income"
                     ? "mt-1 text-green-500"
@@ -441,7 +441,7 @@ const groups = await prisma.transactionGroup.findMany({
 
         if (previewDate) {
             const date = new Date(dateInput.value);
-            previewDate.textContent = date.toLocaleString("en-US", {
+            previewDate.textContent = date.toLocaleString("es-ES", {
                 day: "numeric",
                 month: "short",
                 year: "numeric",
