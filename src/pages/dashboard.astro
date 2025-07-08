@@ -8,6 +8,19 @@ if (!isAuthenticated(Astro.request)) {
   );
   return Astro.redirect("/login");
 }
+
+// This is the dashboard page for authenticated users
+// It provides an overview of the user's financial data, quick actions, and a calendar view of transactions
+// It is designed to be responsive and user-friendly, with a focus on accessibility and performance
+// The dashboard includes:
+// - Monthly overview of income and expenses
+// - Quick actions for adding income, expenses, and recurring transactions
+// - A calendar view of transactions with caching for performance
+// - Navigation links to other pages (transactions, recurring transactions, profile)
+// - Logout button to end the session
+// The dashboard is styled using Tailwind CSS for a modern and clean look
+// It uses Astro components for layout and structure, ensuring a consistent design across the application
+// The calendar functionality is implemented in the script section, allowing users to view their transactions by date
 ---
 
 <Layout title="Dashboard">
@@ -26,9 +39,6 @@ if (!isAuthenticated(Astro.request)) {
         <h2 class="text-lg font-semibold text-purple-300 hover:text-purple-100">
           <a href="/recurring-transactions"> Recurring </a>
         </h2>
-        <h2 class="text-lg font-semibold text-purple-300 hover:text-purple-100">
-          <a href="/reports"> Reports </a>
-        </h2>
       </nav>
       <div class="flex items-center space-x-4">
         <a
@@ -40,7 +50,7 @@ if (!isAuthenticated(Astro.request)) {
         <form action="/api/auth/logout" method="POST" class="inline">
           <button
             type="submit"
-            class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition duration-200"
+            class="px-4 py-2 bg-red-700 text-white rounded hover:bg-red-900 transition duration-200"
           >
             Logout
           </button>
@@ -49,15 +59,28 @@ if (!isAuthenticated(Astro.request)) {
     </header>
 
     <section
-      class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6"
     >
       <article class="bg-gray-800 p-6 rounded-lg shadow-lg">
         <h2 class="text-xl font-semibold text-purple-400 mb-4">
           Monthly Overview
         </h2>
         <div class="space-y-2">
-          <p>Income this month: <span class="text-green-500">$0.00</span></p>
-          <p>Expenses this month: <span class="text-red-500">$0.00</span></p>
+          <p>
+            Income this month: <span class="text-green-500" data-monthly-income
+              >$0.00</span
+            >
+          </p>
+          <p>
+            Expenses this month: <span class="text-red-500" data-monthly-expense
+              >$0.00</span
+            >
+          </p>
+          <p>
+            Balance this month: <span class="text-blue-500" data-monthly-balance
+              >$0.00</span
+            >
+          </p>
         </div>
       </article>
 
@@ -66,48 +89,101 @@ if (!isAuthenticated(Astro.request)) {
         <h2 class="text-xl font-semibold text-purple-400 mb-4">
           Quick Actions
         </h2>
-        <div class="space-y-3">
-          <a
-            href="/transactions/new"
-            class="block py-2 px-4 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200 text-center"
-          >
-            Add Transaction
-          </a>
+        <div class="space-y-3 overflow-hidden">
+          <div class="flex w-full justify-between space-x-3">
+            <div class="grow flex justify-between w-full space-x-3">
+              <a
+                href="/transactions/new"
+                class="grow text-nowrap block py-2 px-4 bg-green-600 text-white rounded hover:bg-green-700 transition duration-200 text-center"
+              >
+                Add Income
+              </a>
+              <a
+                href="/transactions/new"
+                class="grow text-nowrap block py-2 px-4 bg-red-600 text-white rounded hover:bg-red-700 transition duration-200 text-center"
+              >
+                Add Expense
+              </a>
+            </div>
+            <a
+              href="/transaction-groups/new"
+              class="shrink text-nowrap block py-2 px-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200 text-center"
+            >
+              New Group
+            </a>
+          </div>
           <a
             href="/recurring-transactions/new"
             class="block py-2 px-4 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200 text-center"
           >
             Add Recurring Transaction
           </a>
-          <a
-            href="/transaction-groups/new"
-            class="block py-2 px-4 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200 text-center"
-          >
-            Add Transaction Group
-          </a>
         </div>
       </article>
 
       <!-- Recent Transactions Card -->
-      <article class="bg-gray-800 p-6 rounded-lg shadow-lg">
+      <!-- <article class="bg-gray-800 p-6 rounded-lg shadow-lg">
         <h2 class="text-xl font-semibold text-purple-400 mb-4">
           Recent Transactions
         </h2>
         <div class="space-y-3">
           <p class="text-gray-400">No recent transactions</p>
         </div>
-      </article>
+      </article> -->
     </section>
-    <section class="max-w-7xl mx-auto mt-8 bg-gray-800 p-6 rounded-lg shadow-lg" id="calendar-container">
+    <section
+      class="max-w-7xl mx-auto mt-8 bg-gray-800 p-6 rounded-lg shadow-lg"
+      id="calendar-container"
+    >
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold text-purple-400">Transaction Calendar</h2>
+        <h2 class="text-xl font-semibold text-purple-400">
+          Transaction Calendar
+        </h2>
         <div class="flex space-x-2 items-center">
-          <button id="prevMonth" class="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200">&lt;</button>
+          <button
+            id="prevMonth"
+            class="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200"
+            >&lt;</button
+          >
           <span id="currentMonth" class="text-lg font-medium text-white"></span>
-          <button id="nextMonth" class="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200">&gt;</button>
-          <button id="refreshMonth" class="ml-2 p-1.5 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+          <button
+            id="nextMonth"
+            class="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200"
+            >&gt;</button
+          >
+          <button
+            id="refreshMonth"
+            class="ml-2 p-1.5 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200"
+            title="Refresh current month"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                clip-rule="evenodd"></path>
+            </svg>
+          </button>
+          <button
+            id="clearCache"
+            class="ml-2 p-1.5 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200"
+            title="Clear all cached months"
+          >
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              class="h-5 w-5" 
+              viewBox="0 0 20 20" 
+              fill="currentColor"
+            >
+              <path 
+                fill-rule="evenodd" 
+                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" 
+                clip-rule="evenodd"
+              />
             </svg>
           </button>
         </div>
@@ -131,7 +207,7 @@ if (!isAuthenticated(Astro.request)) {
       title: string;
       date: string;
       amount: number;
-      type: 'income' | 'expense';
+      type: "income" | "expense";
       isRecurring: boolean;
     }
 
@@ -148,23 +224,76 @@ if (!isAuthenticated(Astro.request)) {
       private prevButton: HTMLElement | null = null;
       private nextButton: HTMLElement | null = null;
       private refreshButton: HTMLButtonElement | null = null;
+      private clearCacheButton: HTMLButtonElement | null = null;
       private readonly CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+      private monthlyOverview: {
+        income: HTMLElement | null;
+        expense: HTMLElement | null;
+        balance: HTMLElement | null;
+      } = {
+        income: null,
+        expense: null,
+        balance: null,
+      };
+
       constructor() {
         this.currentDate = new Date();
         this.events = [];
         this.setupCalendar();
         this.bindEvents();
+        this.setupMonthlyOverview();
         this.loadEvents();
+        this.updateMonthlyOverview();
+      }
+
+      private setupMonthlyOverview() {
+        // Wait a bit to ensure DOM elements are available
+        setTimeout(() => {
+          this.monthlyOverview = {
+            income: document.querySelector("[data-monthly-income]"),
+            expense: document.querySelector("[data-monthly-expense]"),
+            balance: document.querySelector("[data-monthly-balance]"),
+          };
+          this.updateMonthlyOverview();
+        }, 0);
+      }
+
+      private updateMonthlyOverviewValues(summary: { totalIncome: number; totalExpense: number; balance: number }) {
+        if (!this.monthlyOverview.income || !this.monthlyOverview.expense || !this.monthlyOverview.balance) {
+          console.warn("Monthly overview elements not found");
+          return;
+        }
+
+        this.monthlyOverview.income.textContent = `$${summary.totalIncome.toFixed(2)}`;
+        this.monthlyOverview.expense.textContent = `$${summary.totalExpense.toFixed(2)}`;
+        this.monthlyOverview.balance.textContent = `$${summary.balance.toFixed(2)}`;
+      }
+
+      private async updateMonthlyOverview() {
+        try {
+          await this.fetchEvents(true); // This will now update both calendar and summary
+        } catch (error) {
+          console.error("Error updating monthly overview:", error);
+        }
+      }
+
+      async changeMonth(increment: number) {
+        this.currentDate.setMonth(this.currentDate.getMonth() + increment);
+        await this.fetchEvents(); // This will now update both calendar and summary
+        this.renderCalendar();
       }
 
       private getCacheKey(year: number, month: number): string {
         return `calendar_${year}_${month}`;
       }
 
-      private getCachedEvents(year: number, month: number): CalendarEvent[] | null {
+      private getCachedEvents(
+        year: number,
+        month: number,
+      ): CalendarEvent[] | null {
         const cacheKey = this.getCacheKey(year, month);
         const cached = localStorage.getItem(cacheKey);
-        
+
         if (!cached) return null;
 
         const cacheEntry: CacheEntry = JSON.parse(cached);
@@ -179,24 +308,29 @@ if (!isAuthenticated(Astro.request)) {
         return cacheEntry.events;
       }
 
-      private setCachedEvents(year: number, month: number, events: CalendarEvent[]): void {
+      private setCachedEvents(
+        year: number,
+        month: number,
+        events: CalendarEvent[],
+      ): void {
         const cacheKey = this.getCacheKey(year, month);
         const cacheEntry: CacheEntry = {
           events,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
         localStorage.setItem(cacheKey, JSON.stringify(cacheEntry));
       }
 
       setupCalendar() {
-        const grid = document.getElementById('calendar-grid');
-        const month = document.getElementById('currentMonth');
-        const prev = document.getElementById('prevMonth');
-        const next = document.getElementById('nextMonth');
-        const refresh = document.getElementById('refreshMonth');
+        const grid = document.getElementById("calendar-grid");
+        const month = document.getElementById("currentMonth");
+        const prev = document.getElementById("prevMonth");
+        const next = document.getElementById("nextMonth");
+        const refresh = document.getElementById("refreshMonth");
+        const clearCache = document.getElementById("clearCache");
 
-        if (!grid || !month || !prev || !next || !refresh) {
-          throw new Error('Required calendar elements not found');
+        if (!grid || !month || !prev || !next || !refresh || !clearCache) {
+          throw new Error("Required calendar elements not found");
         }
 
         this.calendarGrid = grid;
@@ -204,31 +338,45 @@ if (!isAuthenticated(Astro.request)) {
         this.prevButton = prev;
         this.nextButton = next;
         this.refreshButton = refresh as HTMLButtonElement;
+        this.clearCacheButton = clearCache as HTMLButtonElement;
         this.renderCalendar();
       }
 
+      private clearAllCache() {
+        const keyPrefix = 'calendar_';
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith(keyPrefix)) {
+            localStorage.removeItem(key);
+          }
+        }
+      }
+
       bindEvents() {
-        if (!this.prevButton || !this.nextButton || !this.refreshButton) return;
+        if (!this.prevButton || !this.nextButton || !this.refreshButton || !this.clearCacheButton) return;
 
-        this.prevButton.addEventListener('click', () => {
-          this.currentDate.setMonth(this.currentDate.getMonth() - 1);
-          this.loadEvents();
+        this.prevButton.addEventListener("click", () => {
+          this.changeMonth(-1);
         });
 
-        this.nextButton.addEventListener('click', () => {
-          this.currentDate.setMonth(this.currentDate.getMonth() + 1);
-          this.loadEvents();
+        this.nextButton.addEventListener("click", () => {
+          this.changeMonth(1);
         });
 
-        this.refreshButton.addEventListener('click', () => {
+        this.refreshButton.addEventListener("click", () => {
           this.fetchEvents(true);
+        });
+
+        this.clearCacheButton.addEventListener("click", () => {
+          this.clearAllCache();
+          this.fetchEvents(true); // Refresh current month after clearing cache
         });
       }
 
       async loadEvents() {
         const year = this.currentDate.getFullYear();
         const month = this.currentDate.getMonth();
-        
+
         // Try to get events from cache first
         const cachedEvents = this.getCachedEvents(year, month);
         if (cachedEvents) {
@@ -259,23 +407,30 @@ if (!isAuthenticated(Astro.request)) {
           // Add loading indicator to refresh button
           if (this.refreshButton) {
             this.refreshButton.disabled = true;
-            this.refreshButton.classList.add('opacity-50');
+            this.refreshButton.classList.add("opacity-50");
           }
 
-          const response = await fetch(`/api/calendar?month=${month}&year=${year}`);
+          const response = await fetch(
+            `/api/calendar?month=${month + 1}&year=${year}`,
+          );
           const data = await response.json();
           this.events = data.events || [];
-          
+
+          // Update monthly summary if available
+          if (data.summary) {
+            this.updateMonthlyOverviewValues(data.summary);
+          }
+
           // Cache the new events
           this.setCachedEvents(year, month, this.events);
           this.renderCalendar();
         } catch (error) {
-          console.error('Error fetching calendar events:', error);
+          console.error("Error fetching calendar events:", error);
         } finally {
           // Remove loading indicator
           if (this.refreshButton) {
             this.refreshButton.disabled = false;
-            this.refreshButton.classList.remove('opacity-50');
+            this.refreshButton.classList.remove("opacity-50");
           }
         }
       }
@@ -285,14 +440,26 @@ if (!isAuthenticated(Astro.request)) {
 
         const year = this.currentDate.getFullYear();
         const month = this.currentDate.getMonth();
-        
+
         // Update month/year display
-        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-          'July', 'August', 'September', 'October', 'November', 'December'];
+        const monthNames = [
+          "January",
+          "February",
+          "March",
+          "April",
+          "May",
+          "June",
+          "July",
+          "August",
+          "September",
+          "October",
+          "November",
+          "December",
+        ];
         this.currentMonthElement.textContent = `${monthNames[month]} ${year}`;
 
         // Clear existing calendar
-        this.calendarGrid.innerHTML = '';
+        this.calendarGrid.innerHTML = "";
 
         // Get first day of month and total days
         const firstDay = new Date(year, month, 1);
@@ -303,42 +470,48 @@ if (!isAuthenticated(Astro.request)) {
 
         // Create calendar grid
         for (let i = 0; i < startingDay; i++) {
-          const emptyCell = document.createElement('div');
-          emptyCell.className = 'p-2 bg-gray-700 rounded-lg min-h-[100px]';
+          const emptyCell = document.createElement("div");
+          emptyCell.className = "p-2 bg-gray-700 rounded-lg min-h-[100px]";
           this.calendarGrid.appendChild(emptyCell);
         }
 
         for (let day = 1; day <= totalDays; day++) {
-          const cell = document.createElement('div');
-          cell.className = 'p-2 bg-gray-700 rounded-lg min-h-[100px] relative';
+          const cell = document.createElement("div");
+          cell.className = "p-2 bg-gray-700 rounded-lg min-h-[100px] relative";
 
           // Add date number
-          const dateNumber = document.createElement('div');
-          dateNumber.className = 'absolute top-1 right-2 text-gray-400';
+          const dateNumber = document.createElement("div");
+          dateNumber.className = "absolute top-1 right-2 text-gray-400";
           dateNumber.textContent = day.toString();
           cell.appendChild(dateNumber);
 
           // Get events for this day
-          const currentDate = new Date(year, month, day).toISOString().split('T')[0];
-          const dayEvents = this.events.filter(event => event.date === currentDate);
+          const currentDate = new Date(year, month, day)
+            .toISOString()
+            .split("T")[0];
+          const dayEvents = this.events.filter(
+            (event) => event.date === currentDate,
+          );
 
           // Add events to the cell
-          const eventContainer = document.createElement('div');
-          eventContainer.className = 'mt-6 space-y-1';
+          const eventContainer = document.createElement("div");
+          eventContainer.className = "mt-6 space-y-1";
 
-          dayEvents.forEach(event => {
-            const eventElement = document.createElement('div');
-            const amount = new Intl.NumberFormat('en-US', {
-              style: 'currency',
-              currency: 'USD'
+          dayEvents.forEach((event) => {
+            const eventElement = document.createElement("a");
+            const amount = new Intl.NumberFormat("es-ES", {
+              style: "currency",
+              currency: "EUR",
             }).format(Math.abs(event.amount));
 
-            eventElement.className = `p-1 rounded text-xs ${
-              event.type === 'income' 
-                ? 'bg-green-900/50 text-green-300' 
-                : 'bg-red-900/50 text-red-300'
-            } ${event.isRecurring ? 'border border-purple-500' : ''}`;
-            
+            eventElement.href = `/transactions/${event.id}/edit`;
+            eventElement.className = `block p-1 rounded text-xs cursor-pointer hover:opacity-80 transition-opacity ${
+              event.type === "income"
+                ? "bg-green-900/50 text-green-300 hover:bg-green-900/70"
+                : "bg-red-900/50 text-red-300 hover:bg-red-900/70"
+            } ${event.isRecurring ? "border border-purple-500" : ""}`;
+
+            eventElement.title = `Click to edit ${event.type}: ${event.title}`;
             eventElement.textContent = `${event.title} (${amount})`;
             eventContainer.appendChild(eventElement);
           });
@@ -352,8 +525,8 @@ if (!isAuthenticated(Astro.request)) {
         const remainingCells = 7 - (totalCells % 7);
         if (remainingCells < 7) {
           for (let i = 0; i < remainingCells; i++) {
-            const emptyCell = document.createElement('div');
-            emptyCell.className = 'p-2 bg-gray-700 rounded-lg min-h-[100px]';
+            const emptyCell = document.createElement("div");
+            emptyCell.className = "p-2 bg-gray-700 rounded-lg min-h-[100px]";
             this.calendarGrid.appendChild(emptyCell);
           }
         }
@@ -361,7 +534,7 @@ if (!isAuthenticated(Astro.request)) {
     }
 
     // Initialize calendar when DOM is loaded
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener("DOMContentLoaded", () => {
       new Calendar();
     });
   </script>
