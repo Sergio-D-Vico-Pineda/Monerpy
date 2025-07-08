@@ -21,6 +21,9 @@ export const GET: APIRoute = async ({ request }) => {
             return new Response(JSON.stringify({ error: 'Invalid month or year' }), { status: 400 });
         }
 
+        console.log(`Fetching calendar events for user ${session.userId} for month ${month} of year ${year}`);
+        console.log(`First day of month: ${new Date(year, month - 1, 1).toISOString()}`);
+        console.log(`Last day of month: ${new Date(Date.UTC(year, month, 0, 23, 59, 59)).toISOString()}`);
         // Get calendar events
         const events = await prisma.transaction.findMany({
             where: {
