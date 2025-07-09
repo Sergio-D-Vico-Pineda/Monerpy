@@ -2,6 +2,67 @@ import type { APIRoute } from 'astro';
 import { isAuthenticated, getSession } from '@midd/auth.ts';
 import { prisma } from '@prisma/index.js';
 
+function generateOccurrencesInMonth(
+    startDate: Date,
+    recurrenceRule: any,
+    amount: number,
+    type: string,
+    description: string | null,
+    id: number,
+    year: number,
+    month: number,
+    endDate: Date | null = null
+): Array<any> {
+    const occurrences = [];
+    const monthStart = new Date(year, month - 1, 1);
+    const monthEnd = new Date(Date.UTC(year, month, 0, 23, 59, 59));
+    let currentDate = new Date(startDate);
+
+    while (currentDate <= monthEnd) {
+        // Check if we've passed the end date
+        if (endDate && currentDate > endDate) {
+            break;
+        }
+
+        if (currentDate >= monthStart) {
+            occurrences.push({
+                id: id,
+                title: description || `${type} transaction (recurring)`,
+                date: currentDate.toISOString().split('T')[0],
+                type,
+                amount,
+                recurring: true
+            });
+        }
+
+        // Advance to next occurrence based on recurrence rule
+        switch (recurrenceRule.frequency) {
+            case 'daily':
+                currentDate.setDate(currentDate.getDate() + (recurrenceRule.interval || 1));
+                break;
+            case 'weekly':
+                currentDate.setDate(currentDate.getDate() + ((recurrenceRule.interval || 1) * 7));
+                break;
+            case 'monthly':
+                currentDate.setMonth(currentDate.getMonth() + (recurrenceRule.interval || 1));
+                if (recurrenceRule.dayOfMonth) {
+                    currentDate.setDate(Math.min(recurrenceRule.dayOfMonth, new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()));
+                }
+                break;
+            case 'yearly':
+                currentDate.setFullYear(currentDate.getFullYear() + (recurrenceRule.interval || 1));
+                if (recurrenceRule.monthOfYear) {
+                    currentDate.setMonth(recurrenceRule.monthOfYear - 1);
+                }
+                if (recurrenceRule.dayOfMonth) {
+                    currentDate.setDate(Math.min(recurrenceRule.dayOfMonth, new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()));
+                }
+                break;
+        }
+    }
+    return occurrences;
+}
+
 export const GET: APIRoute = async ({ request }) => {
     try {
         if (!isAuthenticated(request)) {
@@ -21,11 +82,8 @@ export const GET: APIRoute = async ({ request }) => {
             return new Response(JSON.stringify({ error: 'Invalid month or year' }), { status: 400 });
         }
 
-        console.log(`Fetching calendar events for user ${session.userId} for month ${month} of year ${year}`);
-        console.log(`First day of month: ${new Date(year, month - 1, 1).toISOString()}`);
-        console.log(`Last day of month: ${new Date(Date.UTC(year, month, 0, 23, 59, 59)).toISOString()}`);
-        // Get calendar events
-        const events = await prisma.transaction.findMany({
+        // Get regular transactions
+        const transactions = await prisma.transaction.findMany({
             where: {
                 userId: session.userId,
                 softDeleted: false,
@@ -43,14 +101,52 @@ export const GET: APIRoute = async ({ request }) => {
             }
         });
 
-        // Transform the events into the format expected by the calendar
-        const calendarEvents = events.map(event => ({
+        // Get recurring transactions
+        const recurringTransactions = await prisma.recurringTransaction.findMany({
+            where: {
+                userId: session.userId,
+                active: true,
+                startDate: {
+                    lte: new Date(Date.UTC(year, month, 0, 23, 59, 59))
+                },
+                OR: [
+                    { endDate: null },
+                    {
+                        endDate: {
+                            gte: new Date(year, month - 1, 1)
+                        }
+                    }
+                ]
+            }
+        });
+
+        // Transform regular transactions
+        const regularEvents = transactions.map(event => ({
             id: event.id,
             title: event.description || `${event.type} transaction`,
             date: event.transactionDate.toISOString().split('T')[0],
             type: event.type,
-            amount: event.amount.toNumber()
+            amount: event.amount.toNumber(),
+            recurring: false
         }));
+
+        // Generate occurrences for recurring transactions
+        const recurringEvents = recurringTransactions.flatMap(rt => 
+            generateOccurrencesInMonth(
+                rt.startDate,
+                JSON.parse(rt.recurrenceRule),
+                rt.amount.toNumber(),
+                rt.type,
+                rt.description,
+                rt.id,
+                year,
+                month,
+                rt.endDate
+            )
+        );
+
+        // Combine both types of events
+        const calendarEvents = [...regularEvents, ...recurringEvents];
 
         return new Response(JSON.stringify({ events: calendarEvents }), {
             status: 200,

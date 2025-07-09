@@ -74,6 +74,7 @@ export const recurringTransactionService = {
                 groupId: data.groupId,
                 description: data.description,
                 startDate: data.startDate,
+                endDate: data.endDate,
                 recurrenceRule: JSON.stringify(data.recurrenceRule),
                 nextOccurrence,
                 active: true,
@@ -100,6 +101,7 @@ export const recurringTransactionService = {
                 groupId: data.groupId,
                 description: data.description,
                 startDate: data.startDate,
+                endDate: data.endDate,
                 recurrenceRule: data.recurrenceRule ? JSON.stringify(data.recurrenceRule) : undefined,
                 nextOccurrence,
             },
@@ -139,6 +141,10 @@ export const recurringTransactionService = {
                 nextOccurrence: {
                     lte: now,
                 },
+                OR: [
+                    { endDate: null },
+                    { endDate: { gt: now } }
+                ]
             },
         });
 
@@ -159,10 +165,18 @@ export const recurringTransactionService = {
             const recurrenceRule = JSON.parse(rt.recurrenceRule) as RecurrenceRule;
             const nextOccurrence = calculateNextOccurrence(rt.nextOccurrence, recurrenceRule);
 
-            await prisma.recurringTransaction.update({
-                where: { id: rt.id },
-                data: { nextOccurrence },
-            });
+            // If this would go beyond the end date, deactivate the recurring transaction
+            if (rt.endDate && nextOccurrence > rt.endDate) {
+                await prisma.recurringTransaction.update({
+                    where: { id: rt.id },
+                    data: { active: false },
+                });
+            } else {
+                await prisma.recurringTransaction.update({
+                    where: { id: rt.id },
+                    data: { nextOccurrence },
+                });
+            }
         }
 
         return recurring.length;

@@ -12,6 +12,7 @@ export interface RecurringTransactionCreate {
     groupId?: number;
     description?: string;
     startDate: Date;
+    endDate?: Date;
     recurrenceRule: RecurrenceRule;
 }
 

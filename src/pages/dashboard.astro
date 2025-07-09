@@ -205,12 +205,18 @@ if (!isAuthenticated(Astro.request)) {
       date: string;
       type: "income" | "expense";
       amount: number;
+      recurring: boolean;
     }
 
     interface MonthSummary {
       totalIncome: number;
       totalExpense: number;
       balance: number;
+    }
+
+    interface CacheEntry {
+      data: { events: CalendarEvent[] };
+      timestamp: number;
     }
 
     // Summary calculation function
@@ -245,11 +251,6 @@ if (!isAuthenticated(Astro.request)) {
     // Cache management with localStorage and expiration
     const CACHE_KEY_PREFIX = "calendar_cache_";
     const CACHE_EXPIRATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-
-    interface CacheEntry {
-      data: { events: CalendarEvent[] };
-      timestamp: number;
-    }
 
     // Helper functions for cache management
     const getCacheKey = (year: number, month: number) =>
@@ -306,6 +307,7 @@ if (!isAuthenticated(Astro.request)) {
     };
 
     const clearCacheBtn = document.getElementById("clearCache");
+
     if (clearCacheBtn) {
       clearCacheBtn.addEventListener("click", () => {
         clearCache();
@@ -450,9 +452,13 @@ if (!isAuthenticated(Astro.request)) {
           dayEvents.forEach((event) => {
             cellContent += `
             <a href="/transactions/${event.id}/edit" 
-               class="block text-sm p-1 rounded ${event.type === "income" ? "text-green-400 hover:bg-green-900/30" : "text-red-400 hover:bg-red-900/30"} hover:no-underline transition-colors">
+               class="block text-sm p-1 rounded ${
+                 event.type === "income" 
+                   ? event.recurring ? "text-green-600 hover:bg-green-900/50" : "text-green-400 hover:bg-green-900/30"
+                   : event.recurring ? "text-red-600 hover:bg-red-900/50" : "text-red-400 hover:bg-red-900/30"
+               } hover:no-underline transition-colors">
               ${formatCurrency(event.amount)}
-              ${event.title ? `<br><span class="text-xs text-gray-400">${event.title}</span>` : ""}
+              ${event.title ? `<br><span class="text-xs ${event.recurring ? "text-gray-500" : "text-gray-400"}">${event.title}</span>` : ""}
             </a>`;
           });
           cellContent += "</div>";

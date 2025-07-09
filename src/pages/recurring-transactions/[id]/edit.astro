@@ -155,10 +155,20 @@ const data = {
             type="date"
             id="startDate"
             name="startDate"
+            value={data.transaction.startDate.toISOString().split("T")[0]}
             required
-            value={new Date(data.transaction.startDate)
-              .toISOString()
-              .split("T")[0]}
+            class="w-full px-4 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+        </div>
+
+        <!-- End Date -->
+        <div class="space-y-2">
+          <label for="endDate" class="block text-gray-300">End Date (Optional)</label>
+          <input
+            type="date"
+            id="endDate"
+            name="endDate"
+            value={data.transaction.endDate?.toISOString().split("T")[0]}
             class="w-full px-4 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
         </div>
@@ -469,6 +479,7 @@ const data = {
         description: formData.get("description")?.toString() || "",
         groupId: groupIdValue ? parseInt(groupIdValue) : undefined,
         startDate: formData.get("startDate")?.toString(),
+        endDate: formData.get("endDate")?.toString() || undefined,
         recurrenceRule,
       };
 
