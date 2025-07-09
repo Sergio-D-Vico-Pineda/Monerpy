@@ -1,0 +1,14 @@
+
+The recurrence rule structure supports:
+   - frequency: 'daily', 'weekly', 'monthly', 'yearly'
+   - interval: number of units (e.g., every 2 weeks)
+   - dayOfWeek: for weekly recurrence
+   - dayOfMonth: for monthly/yearly recurrence
+   - monthOfYear: for yearly recurrence
+
+Example: 
+{
+  "frequency": "monthly",
+  "interval": 1,
+  "dayOfMonth": 1
+}

@@ -63,6 +63,7 @@ model RecurringTransaction {
     groupId        Int?
     description    String?
     startDate      DateTime
+    endDate        DateTime?
     recurrenceRule String
     nextOccurrence DateTime
     active         Boolean           @default(true)
