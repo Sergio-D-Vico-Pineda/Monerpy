@@ -1,13 +1,8 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import { isAuthenticated, getCurrentUserId } from "@midd/auth";
+import { isAuthenticated } from "@midd/auth";
 
 if (!isAuthenticated(Astro.request)) {
-    return Astro.redirect("/login");
-}
-
-const userId = getCurrentUserId(Astro.request);
-if (!userId) {
     return Astro.redirect("/login");
 }
 ---
@@ -15,11 +10,16 @@ if (!userId) {
 <Layout title="New Transaction Group">
     <main class="min-h-screen bg-gray-900 text-white p-8">
         <div class="max-w-2xl mx-auto">
-            <h1 class="text-2xl font-bold mb-6 text-purple-500">New Transaction Group</h1>
+            <h1 class="text-2xl font-bold mb-6 text-purple-500">
+                New Transaction Group
+            </h1>
 
             <form id="groupForm" class="space-y-6">
                 <div>
-                    <label for="name" class="block text-sm font-medium text-purple-300">
+                    <label
+                        for="name"
+                        class="block text-sm font-medium text-purple-300"
+                    >
                         Name
                     </label>
                     <input
@@ -32,7 +32,10 @@ if (!userId) {
                 </div>
 
                 <div>
-                    <label for="type" class="block text-sm font-medium text-purple-300">
+                    <label
+                        for="type"
+                        class="block text-sm font-medium text-purple-300"
+                    >
                         Type
                     </label>
                     <select
@@ -47,7 +50,10 @@ if (!userId) {
                 </div>
 
                 <div>
-                    <label for="description" class="block text-sm font-medium text-purple-300">
+                    <label
+                        for="description"
+                        class="block text-sm font-medium text-purple-300"
+                    >
                         Description
                     </label>
                     <textarea
@@ -74,37 +80,37 @@ if (!userId) {
                 </div>
             </form>
         </div>
-    </div>
+    </main>
 
     <script>
-        const form = document.getElementById('groupForm');
-        form?.addEventListener('submit', async (e) => {
+        const form = document.getElementById("groupForm");
+        form?.addEventListener("submit", async (e) => {
             e.preventDefault();
 
             const formData = new FormData(e.target as HTMLFormElement);
             const data = {
-                name: formData.get('name'),
-                type: formData.get('type'),
-                description: formData.get('description'),
+                name: formData.get("name"),
+                type: formData.get("type"),
+                description: formData.get("description"),
             };
 
             try {
-                const response = await fetch('/api/transaction-groups', {
-                    method: 'POST',
+                const response = await fetch("/api/transaction-groups", {
+                    method: "POST",
                     headers: {
-                        'Content-Type': 'application/json',
+                        "Content-Type": "application/json",
                     },
                     body: JSON.stringify(data),
                 });
 
                 if (response.ok) {
-                    window.location.href = '/transaction-groups';
+                    window.location.href = "/transaction-groups";
                 } else {
-                    alert('Failed to create the group');
+                    alert("Failed to create the group");
                 }
             } catch (error) {
-                console.error('Error:', error);
-                alert('Failed to create the group');
+                console.error("Error:", error);
+                alert("Failed to create the group");
             }
         });
     </script>
