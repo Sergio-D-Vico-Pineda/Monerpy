@@ -1,5 +1,6 @@
 import { prisma } from "@prisma/index.js";
 import { Decimal } from "@prisma/client/runtime/library";
+import { validateTransaction } from '../validation/transaction';
 
 interface TransactionInput {
     amount: number;
@@ -139,6 +140,12 @@ const transactionService = {
     },
 
     async create(userId: number, data: TransactionInput) {
+        // Validate data before attempting to create
+        const validationErrors = validateTransaction(data);
+        if (validationErrors.length > 0) {
+            throw new Error('Validation failed: ' + JSON.stringify(validationErrors));
+        }
+
         return prisma.transaction.create({
             data: {
                 ...data,
@@ -158,6 +165,12 @@ const transactionService = {
     },
 
     async update(userId: number, id: number, data: TransactionInput) {
+        // Validate data before attempting to update
+        const validationErrors = validateTransaction(data);
+        if (validationErrors.length > 0) {
+            throw new Error('Validation failed: ' + JSON.stringify(validationErrors));
+        }
+
         const transaction = await prisma.transaction.findFirst({
             where: {
                 id,

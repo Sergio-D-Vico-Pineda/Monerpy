@@ -1,8 +1,9 @@
 import type { APIRoute } from 'astro';
 import { getCurrentUserId } from '@lib/auth';
 import { transactionService } from '@lib/services/transaction';
+import { validateTransaction } from '@lib/validation/transaction';
 
-export const PUT: APIRoute = async ({ request, params }) => {
+const PUT: APIRoute = async ({ request, params }) => {
     try {
         const userId = await getCurrentUserId(request);
         if (!userId) {
@@ -21,6 +22,19 @@ export const PUT: APIRoute = async ({ request, params }) => {
         }
 
         const data = await request.json();
+        
+        // Validate transaction data
+        const validationErrors = validateTransaction(data);
+        if (validationErrors.length > 0) {
+            return new Response(JSON.stringify({ 
+                error: 'Validation failed', 
+                validationErrors 
+            }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
         const transaction = await transactionService.update(userId, id, data);
 
         return new Response(JSON.stringify(transaction), {
@@ -36,7 +50,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
     }
 };
 
-export const DELETE: APIRoute = async ({ request, params }) => {
+const DELETE: APIRoute = async ({ request, params }) => {
     try {
         const userId = await getCurrentUserId(request);
         if (!userId) {
@@ -65,3 +79,8 @@ export const DELETE: APIRoute = async ({ request, params }) => {
         });
     }
 };
+
+export {
+    PUT,
+    DELETE
+}

@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getCurrentUserId } from '@lib/auth';
 import { transactionService } from '@lib/services/transaction';
+import { validateTransaction } from '@lib/validation/transaction';
 
 export const GET: APIRoute = async ({ request, url }) => {
     try {
@@ -49,6 +50,19 @@ export const POST: APIRoute = async ({ request }) => {
         }
 
         const data = await request.json();
+
+        // Validate transaction data
+        const validationErrors = validateTransaction(data);
+        if (validationErrors.length > 0) {
+            return new Response(JSON.stringify({ 
+                error: 'Validation failed', 
+                validationErrors 
+            }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
         const transaction = await transactionService.create(userId, data);
 
         return new Response(JSON.stringify(transaction), {
