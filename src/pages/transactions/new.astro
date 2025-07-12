@@ -445,8 +445,6 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
     // Client-side validation
     function validateField(input: HTMLElement) {
         const error = document.getElementById(`${input.id}Error`);
-        console.log("Validating field:", input.id);
-        console.log("Error element:", error);
         if (!error) return true;
 
         error.classList.add("hidden");
@@ -492,9 +490,7 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
         let errors: any[] = [];
 
         [...typeRadios, amountInput, dateInput].forEach((input) => {
-            console.log("Validating input:", input.id);
             if (!validateField(input)) {
-                console.log("Validation failed for:", input.id);
                 isValid = false;
                 const error = document.getElementById(`${input.id}Error`);
                 if (error && error.textContent) {
@@ -594,10 +590,20 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
             });
 
             if (!response.ok) {
-                const data = await response
-                    .json()
-                    .catch(() => ({ message: "Failed to create transaction" }));
-                throw new Error(data.message || "Failed to create transaction");
+                let error;
+                try {
+                    const errorData = await response.json();
+                    error = errorData["validationErrors"] || "Unknown error";
+                } catch (error) {
+                    console.error(
+                        "[new] Failed to parse error response:",
+                        error,
+                    );
+                }
+
+                throw new Error(
+                    "[new] Failed to create transaction - " + error[0].message,
+                );
             }
 
             window.showToast("Transaction created successfully!", "success");
@@ -608,7 +614,7 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
             window.showToast(
                 error instanceof Error
                     ? error.message
-                    : "Failed to create transaction",
+                    : "[new] Failed to create transaction",
                 "error",
             );
             // Reset loading state
