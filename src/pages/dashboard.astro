@@ -200,7 +200,7 @@ const userId = getCurrentUserId(Astro.request);
     </section>
   </main>
 
-  <script define:vars={{ userId }}>
+  <script is:inline define:vars={{ userId }}>
     // Define shapes of our objects using JSDoc for type checking
     /**
      * @typedef {Object} CalendarEvent
