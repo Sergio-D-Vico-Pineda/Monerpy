@@ -73,6 +73,7 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
                                 </label>
                                 <label class="inline-flex items-center">
                                     <input
+                                        id="type"
                                         type="radio"
                                         name="type"
                                         value="income"
@@ -87,6 +88,7 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
                                 </label>
                                 <label class="inline-flex items-center">
                                     <input
+                                        id="type"
                                         type="radio"
                                         name="type"
                                         value="expense"
@@ -155,8 +157,13 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
                                 groups.length === 0 ? (
                                     <p class="text-sm text-red-500 text-center">
                                         There are no groups available.
-                                        <a href="/transaction-groups/new" class="text-purple-400 hover:underline">
-                                            Create Group here</a>.
+                                        <a
+                                            href="/transaction-groups/new"
+                                            class="text-purple-400 hover:underline"
+                                        >
+                                            Create Group here
+                                        </a>
+                                        .
                                     </p>
                                 ) : (
                                     <>
@@ -420,6 +427,7 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     dateInput.value = now.toISOString().slice(0, 16);
 
+    let radioChecked: boolean = false;
     // Track changes
     [
         ...typeRadios,
@@ -437,18 +445,17 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
     // Client-side validation
     function validateField(input: HTMLElement) {
         const error = document.getElementById(`${input.id}Error`);
+        console.log("Validating field:", input.id);
+        console.log("Error element:", error);
         if (!error) return true;
 
         error.classList.add("hidden");
 
-        if (
-            input.id === "type" ||
-            input.attributes.getNamedItem("name")?.value === "type"
-        ) {
-            const select = input as HTMLSelectElement;
-            if (!select.value) {
+        if (input.id === "type" && !radioChecked) {
+            if ([...typeRadios].every((radio) => !radio.checked)) {
                 error.textContent = "Please select a type";
                 error.classList.remove("hidden");
+                radioChecked = true;
                 return false;
             }
         }
@@ -485,7 +492,9 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
         let errors: any[] = [];
 
         [...typeRadios, amountInput, dateInput].forEach((input) => {
+            console.log("Validating input:", input.id);
             if (!validateField(input)) {
+                console.log("Validation failed for:", input.id);
                 isValid = false;
                 const error = document.getElementById(`${input.id}Error`);
                 if (error && error.textContent) {
