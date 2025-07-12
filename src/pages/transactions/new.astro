@@ -18,6 +18,24 @@ const groups = await prisma.transactionGroup.findMany({
     where: { userId, softDeleted: false },
     select: { id: true, name: true, type: true },
 });
+
+const incomeGroups = groups.filter((g) => g.type === "income");
+const expenseGroups = groups.filter((g) => g.type === "expense");
+
+const type = Astro.url.searchParams.get("type");
+let group = Astro.url.searchParams.get("groupId");
+let groupId: number | null = null;
+try {
+    groupId = parseInt(group || "");
+} catch (error) {
+    console.error("Error parsing groupId:", error);
+}
+if (type && !["income", "expense"].includes(type)) {
+    return Astro.redirect("/transactions/new");
+}
+if (groupId && !groups.some((g) => g.id === groupId)) {
+    return Astro.redirect("/transactions/new");
+}
 ---
 
 <Layout title="New Transaction">
@@ -34,7 +52,7 @@ const groups = await prisma.transactionGroup.findMany({
                         </h2>
                     </nav>
                     <a
-                        href="/transactions/recurring/new"
+                        href="/recurring-transactions/new"
                         class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200"
                     >
                         Create Recurring Instead
@@ -47,22 +65,40 @@ const groups = await prisma.transactionGroup.findMany({
                 <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
                     <form id="transactionForm" class="space-y-6">
                         <div>
-                            <label
-                                class="block text-sm font-medium mb-2"
-                                for="type"
+                            <div
+                                class="flex justify-center space-x-4 items-center"
                             >
-                                Type <span class="text-red-500">*</span>
-                            </label>
-                            <select
-                                id="type"
-                                name="type"
-                                required
-                                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            >
-                                <option value="">Select Type</option>
-                                <option value="income">Income</option>
-                                <option value="expense">Expense</option>
-                            </select>
+                                <label class="block text-lg font-medium">
+                                    <span class="text-red-500">*</span> Type:
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input
+                                        type="radio"
+                                        name="type"
+                                        value="income"
+                                        class="form-radio accent-purple-600 peer"
+                                        required
+                                        checked={type === "income"}
+                                    />
+                                    <span
+                                        class="ml-2 peer-checked:text-green-500"
+                                        >Income</span
+                                    >
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input
+                                        type="radio"
+                                        name="type"
+                                        value="expense"
+                                        class="form-radio peer accent-purple-600"
+                                        required
+                                        checked={type === "expense"}
+                                    />
+                                    <span class="ml-2 peer-checked:text-red-500"
+                                        >Expense</span
+                                    >
+                                </label>
+                            </div>
                             <p
                                 class="mt-1 text-sm text-red-500 hidden"
                                 id="typeError"
@@ -75,7 +111,7 @@ const groups = await prisma.transactionGroup.findMany({
                                 class="block text-sm font-medium mb-2"
                                 for="amount"
                             >
-                                Amount (€) <span class="text-red-500">*</span>
+                                <span class="text-red-500">*</span> Amount (€)
                             </label>
                             <input
                                 type="number"
@@ -115,11 +151,98 @@ const groups = await prisma.transactionGroup.findMany({
                         </div>
 
                         <div>
+                            {
+                                groups.length === 0 ? (
+                                    <p class="text-sm text-red-500 text-center">
+                                        There are no groups available.
+                                        <a href="/transaction-groups/new" class="text-purple-400 hover:underline">
+                                            Create Group here</a>.
+                                    </p>
+                                ) : (
+                                    <>
+                                        <label
+                                            class="block text-sm font-medium mb-2"
+                                            for="groupId"
+                                        >
+                                            <a
+                                                href="/transaction-groups"
+                                                class="hover:underline"
+                                            >
+                                                Group
+                                            </a>
+                                        </label>
+                                        <div class="w-full flex flex-row items-center gap-5">
+                                            <select
+                                                id="groupId"
+                                                name="groupId"
+                                                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            >
+                                                <option value="">
+                                                    No Group
+                                                </option>
+
+                                                {incomeGroups.length > 0 && (
+                                                    <optgroup label="Income Groups">
+                                                        {incomeGroups.map(
+                                                            (group) => (
+                                                                <option
+                                                                    value={
+                                                                        group.id
+                                                                    }
+                                                                    selected={
+                                                                        group.id ===
+                                                                        groupId
+                                                                    }
+                                                                >
+                                                                    {group.name}
+                                                                </option>
+                                                            ),
+                                                        )}
+                                                    </optgroup>
+                                                )}
+                                                {expenseGroups.length > 0 && (
+                                                    <optgroup label="Expense Groups">
+                                                        {expenseGroups.map(
+                                                            (group) => (
+                                                                <option
+                                                                    value={
+                                                                        group.id
+                                                                    }
+                                                                    selected={
+                                                                        group.id ===
+                                                                        groupId
+                                                                    }
+                                                                >
+                                                                    {group.name}
+                                                                </option>
+                                                            ),
+                                                        )}
+                                                    </optgroup>
+                                                )}
+                                            </select>
+                                            <a
+                                                href="/transaction-groups/new"
+                                                class="mt-1 block px-3 py-2 bg-gray-700 border border-gray-600 rounded-md hover:ring-2 hover:ring-purple-500"
+                                            >
+                                                New
+                                            </a>
+                                        </div>
+                                    </>
+                                )
+                            }
+                            <p
+                                class="mt-1 text-sm text-red-500 hidden"
+                                id="groupError"
+                            >
+                            </p>
+                        </div>
+
+                        <div>
                             <label
                                 class="block text-sm font-medium mb-2"
                                 for="transactionDate"
                             >
-                                Date & Time <span class="text-red-500">*</span>
+                                <span class="text-red-500">*</span> Date & Time
                             </label>
                             <input
                                 type="datetime-local"
@@ -131,49 +254,6 @@ const groups = await prisma.transactionGroup.findMany({
                             <p
                                 class="mt-1 text-sm text-red-500 hidden"
                                 id="dateError"
-                            >
-                            </p>
-                        </div>
-
-                        <div>
-                            <label
-                                class="block text-sm font-medium mb-2"
-                                for="groupId"
-                            >
-                                Group
-                            </label>
-                            <select
-                                id="groupId"
-                                name="groupId"
-                                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            >
-                                <option value="">No Group</option>
-                                <optgroup label="Income Groups">
-                                    {
-                                        groups
-                                            .filter((g) => g.type === "income")
-                                            .map((group) => (
-                                                <option value={group.id}>
-                                                    {group.name}
-                                                </option>
-                                            ))
-                                    }
-                                </optgroup>
-                                <optgroup label="Expense Groups">
-                                    {
-                                        groups
-                                            .filter((g) => g.type === "expense")
-                                            .map((group) => (
-                                                <option value={group.id}>
-                                                    {group.name}
-                                                </option>
-                                            ))
-                                    }
-                                </optgroup>
-                            </select>
-                            <p
-                                class="mt-1 text-sm text-red-500 hidden"
-                                id="groupError"
                             >
                             </p>
                         </div>
@@ -304,8 +384,11 @@ const groups = await prisma.transactionGroup.findMany({
     let leavingTo: string | null = null;
 
     // Form elements
-    // const form = document.getElementById("transactionForm") as HTMLFormElement;
-    const typeInput = document.getElementById("type") as HTMLSelectElement;
+    // const typeInput = document.getElementById("type") as HTMLSelectElement;
+    const typeRadios = document.querySelectorAll(
+        'input[name="type"]',
+    ) as NodeListOf<HTMLInputElement>;
+
     const amountInput = document.getElementById("amount") as HTMLInputElement;
     const descriptionInput = document.getElementById(
         "description",
@@ -338,14 +421,18 @@ const groups = await prisma.transactionGroup.findMany({
     dateInput.value = now.toISOString().slice(0, 16);
 
     // Track changes
-    [typeInput, amountInput, descriptionInput, dateInput, groupInput].forEach(
-        (input) => {
-            input?.addEventListener("change", () => {
-                hasChanges = true;
-                validateField(input);
-            });
-        },
-    );
+    [
+        ...typeRadios,
+        amountInput,
+        descriptionInput,
+        dateInput,
+        groupInput,
+    ].forEach((input) => {
+        input?.addEventListener("change", () => {
+            hasChanges = true;
+            validateField(input);
+        });
+    });
 
     // Client-side validation
     function validateField(input: HTMLElement) {
@@ -354,7 +441,10 @@ const groups = await prisma.transactionGroup.findMany({
 
         error.classList.add("hidden");
 
-        if (input.id === "type") {
+        if (
+            input.id === "type" ||
+            input.attributes.getNamedItem("name")?.value === "type"
+        ) {
             const select = input as HTMLSelectElement;
             if (!select.value) {
                 error.textContent = "Please select a type";
@@ -394,7 +484,7 @@ const groups = await prisma.transactionGroup.findMany({
         let isValid = true;
         let errors: any[] = [];
 
-        [typeInput, amountInput, dateInput].forEach((input) => {
+        [...typeRadios, amountInput, dateInput].forEach((input) => {
             if (!validateField(input)) {
                 isValid = false;
                 const error = document.getElementById(`${input.id}Error`);
@@ -417,11 +507,12 @@ const groups = await prisma.transactionGroup.findMany({
     previewBtn?.addEventListener("click", () => {
         if (!validateForm()) return;
 
+        const selectedType = [...typeRadios].find((radio) => radio.checked);
         if (previewType) {
             previewType.textContent =
-                typeInput.value === "income" ? "🟢 Income" : "🔴 Expense";
+                selectedType?.value === "income" ? "🟢 Income" : "🔴 Expense";
             previewType.className =
-                typeInput.value === "income"
+                selectedType?.value === "income"
                     ? "mt-1 text-green-500"
                     : "mt-1 text-red-500";
         }
@@ -430,7 +521,7 @@ const groups = await prisma.transactionGroup.findMany({
             const amount = parseFloat(amountInput.value);
             previewAmount.textContent = `${amount.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €`;
             previewAmount.className =
-                typeInput.value === "income"
+                selectedType?.value === "income"
                     ? "mt-1 text-green-500"
                     : "mt-1 text-red-500";
         }
@@ -451,7 +542,7 @@ const groups = await prisma.transactionGroup.findMany({
         }
 
         if (previewGroup) {
-            const selectedOption = groupInput.selectedOptions[0];
+            const selectedOption = groupInput?.selectedOptions[0];
             previewGroup.textContent = selectedOption
                 ? selectedOption.text
                 : "No Group";
@@ -463,6 +554,9 @@ const groups = await prisma.transactionGroup.findMany({
     // Save functionality
     saveBtn?.addEventListener("click", async () => {
         if (!validateForm()) return;
+
+        // Find the selected transaction type
+        const selectedType = [...typeRadios].find((radio) => radio.checked);
 
         // Show loading state
         const saveSpinner = document.getElementById("saveSpinner");
@@ -480,11 +574,11 @@ const groups = await prisma.transactionGroup.findMany({
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    type: typeInput.value,
+                    type: selectedType?.value,
                     amount: parseFloat(amountInput.value),
                     description: descriptionInput.value || null,
                     transactionDate: new Date(dateInput.value).toISOString(),
-                    groupId: groupInput.value
+                    groupId: groupInput?.value
                         ? parseInt(groupInput.value)
                         : null,
                 }),
