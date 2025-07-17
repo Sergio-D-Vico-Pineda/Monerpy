@@ -21,6 +21,22 @@ const groups = await prisma.transactionGroup.findMany({
 
 // Pass groups to frontend
 const groupsJson = JSON.stringify(groups);
+
+const type = Astro.url.searchParams.get("type");
+let group = Astro.url.searchParams.get("groupId");
+let groupId: number | null = null;
+try {
+  groupId = parseInt(group || "");
+} catch (error) {
+  console.error("Error parsing groupId:", error);
+  groupId = null;
+}
+/* if (type && !["income", "expense"].includes(type)) {
+    return Astro.redirect("/transactions/new");
+} */
+if (groupId && !groups.some((g) => g.id === groupId)) {
+  return Astro.redirect("/transactions/new");
+}
 ---
 
 <Layout title="New Recurring Transaction">
@@ -46,27 +62,31 @@ const groupsJson = JSON.stringify(groups);
       >
         <!-- Type Selection -->
         <div class="space-y-2">
-          <label class="block text-gray-300">Type</label>
+          <span class="block text-lg font-medium">
+            <span class="text-red-500">*</span> Type:
+          </span>
           <div class="flex space-x-4">
             <label class="inline-flex items-center">
               <input
                 type="radio"
                 name="type"
                 value="income"
-                class="form-radio text-purple-600"
+                class="form-radio text-purple-600 peer"
                 required
+                checked={type === "income"}
               />
-              <span class="ml-2">Income</span>
+              <span class="ml-2 peer-checked:text-green-500">Income</span>
             </label>
             <label class="inline-flex items-center">
               <input
                 type="radio"
                 name="type"
                 value="expense"
-                class="form-radio text-purple-600"
+                class="form-radio text-purple-600 peer"
                 required
+                checked={type === "expense"}
               />
-              <span class="ml-2">Expense</span>
+              <span class="ml-2 peer-checked:text-red-500">Expense</span>
             </label>
           </div>
         </div>

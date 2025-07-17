@@ -19,6 +19,8 @@ const groups = await prisma.transactionGroup.findMany({
     select: { id: true, name: true, type: true },
 });
 
+const groupsJson = JSON.stringify(groups);
+
 const incomeGroups = groups.filter((g) => g.type === "income");
 const expenseGroups = groups.filter((g) => g.type === "expense");
 
@@ -29,10 +31,11 @@ try {
     groupId = parseInt(group || "");
 } catch (error) {
     console.error("Error parsing groupId:", error);
+    groupId = null;
 }
-if (type && !["income", "expense"].includes(type)) {
+/* if (type && !["income", "expense"].includes(type)) {
     return Astro.redirect("/transactions/new");
-}
+} */
 if (groupId && !groups.some((g) => g.id === groupId)) {
     return Astro.redirect("/transactions/new");
 }
@@ -68,9 +71,9 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
                             <div
                                 class="flex justify-center space-x-4 items-center"
                             >
-                                <label class="block text-lg font-medium">
+                                <span class="block text-lg font-medium">
                                     <span class="text-red-500">*</span> Type:
-                                </label>
+                                </span>
                                 <label class="inline-flex items-center">
                                     <input
                                         id="type"
