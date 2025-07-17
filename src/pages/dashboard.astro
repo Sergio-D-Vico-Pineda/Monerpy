@@ -450,7 +450,7 @@ const userId = getCurrentUserId(Astro.request);
           cellContent += '<div class="mt-6 space-y-1">';
           dayEvents.forEach((event) => {
             cellContent += `
-              <a href="/transactions/${event.id}/edit" 
+              <a href="${event.recurring ? "/recurring-transactions" : "/transactions"}/${event.id}/edit" 
                  class="block text-sm p-1 rounded ${
                    event.type === "income"
                      ? event.recurring
