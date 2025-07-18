@@ -54,9 +54,9 @@ export const POST: APIRoute = async ({ request }) => {
         // Validate transaction data
         const validationErrors = validateTransaction(data);
         if (validationErrors.length > 0) {
-            return new Response(JSON.stringify({ 
-                error: 'Validation failed', 
-                validationErrors 
+            return new Response(JSON.stringify({
+                error: 'Validation failed',
+                validationErrors
             }), {
                 status: 400,
                 headers: { 'Content-Type': 'application/json' }

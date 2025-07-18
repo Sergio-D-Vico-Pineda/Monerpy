@@ -13,11 +13,11 @@ export const GET: APIRoute = async ({ request }) => {
     if (!userId) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
-    
+
     try {
         // Process any pending recurring transactions
         await recurringTransactionService.processRecurringTransactions(userId);
-        
+
         // Get all recurring transactions
         const recurringTransactions = await recurringTransactionService.getAll(userId);
         return new Response(JSON.stringify(recurringTransactions));

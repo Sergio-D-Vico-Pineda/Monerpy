@@ -131,7 +131,7 @@ export const GET: APIRoute = async ({ request }) => {
         }));
 
         // Generate occurrences for recurring transactions
-        const recurringEvents = recurringTransactions.flatMap(rt => 
+        const recurringEvents = recurringTransactions.flatMap(rt =>
             generateOccurrencesInMonth(
                 rt.startDate,
                 JSON.parse(rt.recurrenceRule),

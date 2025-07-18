@@ -114,9 +114,11 @@ const expenseTransactions = recurringTransactions.filter(
                                                 ).toLocaleDateString()}
                                             </td>
                                             <td class="py-3 px-4">
-                                                {transaction.endDate ? new Date(
-                                                    transaction.endDate,
-                                                ).toLocaleDateString() : "-"}
+                                                {transaction.endDate
+                                                    ? new Date(
+                                                          transaction.endDate,
+                                                      ).toLocaleDateString()
+                                                    : "-"}
                                             </td>
                                             <td class="py-3 px-4">
                                                 <span
@@ -267,9 +269,11 @@ const expenseTransactions = recurringTransactions.filter(
                                                 ).toLocaleDateString()}
                                             </td>
                                             <td class="py-3 px-4">
-                                                {transaction.endDate ? new Date(
-                                                    transaction.endDate,
-                                                ).toLocaleDateString() : "-"}
+                                                {transaction.endDate
+                                                    ? new Date(
+                                                          transaction.endDate,
+                                                      ).toLocaleDateString()
+                                                    : "-"}
                                             </td>
                                             <td class="py-3 px-4">
                                                 <span

@@ -14,11 +14,11 @@ export const transactionGroupService = {
             softDeleted: false,
             ...(options?.search
                 ? {
-                      OR: [
-                          { name: { contains: options.search } },
-                          { description: { contains: options.search } },
-                      ],
-                  }
+                    OR: [
+                        { name: { contains: options.search } },
+                        { description: { contains: options.search } },
+                    ],
+                }
                 : {}),
         };
 

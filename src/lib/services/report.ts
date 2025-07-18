@@ -100,10 +100,10 @@ export const reportService = {
     },
 
     async getCustomRangeComparison(
-        userId: number, 
-        range1Start: Date, 
-        range1End: Date, 
-        range2Start: Date, 
+        userId: number,
+        range1Start: Date,
+        range1End: Date,
+        range2Start: Date,
         range2End: Date
     ): Promise<PeriodComparison> {
         return {
@@ -129,7 +129,7 @@ export const reportService = {
 
     calculateDailyTotals(transactions: any[], startDate: Date, endDate: Date) {
         const dailyMap = new Map<string, { income: number; expenses: number }>();
-        
+
         // Initialize all dates in the range
         const currentDate = new Date(startDate);
         while (currentDate <= endDate) {
@@ -173,7 +173,7 @@ export const reportService = {
 
     generateCSVReport(summary: TransactionSummary): string {
         let csv = 'Category,Type,Amount\n';
-        
+
         // Add income by group
         summary.incomeByGroup.forEach(({ groupName, amount }) => {
             csv += `${groupName},Income,${amount}\n`;

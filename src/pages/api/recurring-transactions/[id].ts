@@ -51,7 +51,7 @@ export const PUT: APIRoute = async ({ request, params }) => {
         if (data.startDate) {
             data.startDate = new Date(data.startDate);
         }
-        
+
         const recurringTransaction = await recurringTransactionService.update(id, userId, data);
         return new Response(JSON.stringify(recurringTransaction));
     } catch (error) {
