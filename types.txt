@@ -1,0 +1,8 @@
+make the types of the schema.primsa in typescript inside the types.ts
+
+Include all models
+Use the same naming.
+Yes include relations.
+Just do it custom types manually
+
+chatgpt4o
