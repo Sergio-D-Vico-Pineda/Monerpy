@@ -91,7 +91,6 @@ Monerpy/
 - **Styling:** TailwindCSS 4
 - **Database:** SQLite with Prisma ORM 6
 - **Authentication:** Custom session-based auth with bcryptjs
-- **Charts:** ApexCharts 4.7.0 and Chart.js 4.5.0 (not being using)
 - **Deployment:** Vercel (@astrojs/vercel adapter)
 
 ### Database Configuration
