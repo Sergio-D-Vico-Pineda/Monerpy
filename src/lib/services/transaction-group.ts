@@ -1,5 +1,4 @@
 import { prisma } from "@prisma/index.js";
-import type { TransactionGroup } from "@prisma/client";
 
 interface TransactionGroupInput {
     name: string;
@@ -30,7 +29,7 @@ export const transactionGroupService = {
         return groups;
     },
 
-    async create(userId: number, data: TransactionGroupInput): Promise<TransactionGroup> {
+    async create(userId: number, data: TransactionGroupInput): Promise<any> {
         return prisma.transactionGroup.create({
             data: {
                 ...data,
@@ -39,7 +38,7 @@ export const transactionGroupService = {
         });
     },
 
-    async getById(id: number, userId: number): Promise<TransactionGroup | null> {
+    async getById(id: number, userId: number): Promise<any> {
         return prisma.transactionGroup.findFirst({
             where: {
                 id,
@@ -53,7 +52,7 @@ export const transactionGroupService = {
         id: number,
         userId: number,
         data: TransactionGroupInput
-    ): Promise<TransactionGroup> {
+    ): Promise<any> {
         return prisma.transactionGroup.update({
             where: {
                 id,
@@ -63,7 +62,7 @@ export const transactionGroupService = {
         });
     },
 
-    async delete(id: number, userId: number): Promise<TransactionGroup> {
+    async delete(id: number, userId: number): Promise<any> {
         return prisma.transactionGroup.update({
             where: {
                 id,
