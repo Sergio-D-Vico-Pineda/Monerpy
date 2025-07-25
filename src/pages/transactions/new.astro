@@ -19,13 +19,26 @@ const groups = await prisma.transactionGroup.findMany({
     select: { id: true, name: true, type: true },
 });
 
-const groupsJson = JSON.stringify(groups);
+// const groupsJson = JSON.stringify(groups);
 
 const incomeGroups = groups.filter((g) => g.type === "income");
 const expenseGroups = groups.filter((g) => g.type === "expense");
 
+let date = Astro.url.searchParams.get("date");
+if (date) {
+    const parsedDate = new Date(date);
+    if (isNaN(parsedDate.getTime())) {
+        date = null;
+        console.error("Invalid date format:", date);
+    } else {
+        // Set the date input to the parsed date with the current hour
+        const now = new Date();
+        parsedDate.setHours(now.getHours() + 2, now.getMinutes());
+        date = parsedDate.toISOString().slice(0, 16); // Format to 'YYYY-MM-DDTHH:mm'
+    }
+}
 const type = Astro.url.searchParams.get("type");
-let group = Astro.url.searchParams.get("groupId");
+const group = Astro.url.searchParams.get("groupId");
 let groupId: number | null = null;
 try {
     groupId = parseInt(group || "");
@@ -258,6 +271,10 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
                                 type="datetime-local"
                                 id="transactionDate"
                                 name="transactionDate"
+                                value={date ||
+                                    new Date(Date.now() + 2 * 60 * 60 * 1000)
+                                        .toISOString()
+                                        .slice(0, 16)}
                                 required
                                 class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                             />
@@ -424,11 +441,6 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
     const unsavedDialog = document.getElementById("unsavedDialog");
     const stayBtn = document.getElementById("stayBtn");
     const leaveBtn = document.getElementById("leaveBtn");
-
-    // Set initial date to now
-    const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    dateInput.value = now.toISOString().slice(0, 16);
 
     let radioChecked: boolean = false;
     // Track changes

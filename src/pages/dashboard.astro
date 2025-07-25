@@ -468,21 +468,26 @@ const groups = await prisma.transactionGroup.findMany({
 
       // Add cells for each day of the month
       for (let day = 1; day <= lastDay; day++) {
-        const currentDate = new Date(year, month, day).toLocaleDateString(
-          "es-ES",
-        );
-        console.log(`[updateCalendar] Processing day ${day} (${currentDate})`);
+        const realDate = new Date(year, month, day + 1)
+          .toISOString()
+          .split("T")[0];
+
+        const currentDateISO = new Date(year, month, day)
+          .toISOString()
+          .split("T")[0];
+
+        console.log(`[updateCalendar] Processing day ${day} (${realDate})`);
         const dayEvents = events.filter((event) => {
           console.log(`[updateCalendar] Filtering events for ${event.date}`);
-          return event.date === currentDate;
+          return event.date === currentDateISO;
         });
 
         let cellContent = `<div class="relative bg-gray-700 p-2 rounded-lg min-h-[100px]">
-          <a href="/transactions/new?date=${currentDate}" class="top-1 right-2 absolute text-gray-400">${day}</a>`;
+          <a href="/transactions/new?date=${realDate}" class="top-1 right-2 absolute text-gray-400">${day}</a>`;
 
         if (dayEvents.length > 0) {
           console.log(
-            `[updateCalendar] Processing day ${day} (${currentDate}) with events:`,
+            `[updateCalendar] Processing day ${day} (${realDate}) with events:`,
             dayEvents,
           );
           cellContent += '<div class="space-y-1 mt-6">';
