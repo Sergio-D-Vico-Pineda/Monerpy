@@ -344,12 +344,12 @@ const groups = await prisma.transactionGroup.findMany({
       );
       const summary = events.reduce(
         (acc, event) => {
-          console.log(`[calculateMonthSummary] Processing event:`, {
-            id: event.id,
-            type: event.type,
-            amount: event.amount,
-            date: event.date,
-          });
+          // console.log(`[calculateMonthSummary] Processing event:`, {
+          //   id: event.id,
+          //   type: event.type,
+          //   amount: event.amount,
+          //   date: event.date,
+          // });
           const amount = event.amount;
           if (event.type === "income") {
             acc.totalIncome += amount;
@@ -384,7 +384,7 @@ const groups = await prisma.transactionGroup.findMany({
 
     // Load month data from localStorage cache or API
     async function loadMonth(year, month) {
-      console.log(`[loadMonth] Loading data for ${year}-${month}`);
+      // console.log(`[loadMonth] Loading data for ${year}-${month}`);
 
       const cachedData = getFromCache(year, month, userId);
       if (cachedData) {
@@ -433,7 +433,7 @@ const groups = await prisma.transactionGroup.findMany({
 
     // Update calendar UI
     function updateCalendar(events) {
-      console.log("[updateCalendar] Starting calendar update");
+      // console.log("[updateCalendar] Starting calendar update");
       if (!calendarGrid) {
         console.error("[updateCalendar] Calendar grid element not found");
         return;
@@ -441,9 +441,7 @@ const groups = await prisma.transactionGroup.findMany({
 
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth();
-      console.log(
-        `[updateCalendar] Rendering calendar for ${year}-${month + 1}`,
-      );
+      // console.log(`[updateCalendar] Rendering calendar for ${year}-${month + 1}`);
 
       // Get first day of month and total days
       const firstDay = new Date(year, month, 1).getDay();
@@ -470,17 +468,23 @@ const groups = await prisma.transactionGroup.findMany({
 
       // Add cells for each day of the month
       for (let day = 1; day <= lastDay; day++) {
-        const currentDateISO = new Date(year, month, day)
-          .toISOString()
-          .split("T")[0];
-        const dayEvents = events.filter(
-          (event) => event.date === currentDateISO,
+        const currentDate = new Date(year, month, day).toLocaleDateString(
+          "es-ES",
         );
+        console.log(`[updateCalendar] Processing day ${day} (${currentDate})`);
+        const dayEvents = events.filter((event) => {
+          console.log(`[updateCalendar] Filtering events for ${event.date}`);
+          return event.date === currentDate;
+        });
 
         let cellContent = `<div class="relative bg-gray-700 p-2 rounded-lg min-h-[100px]">
-          <div class="top-1 right-2 absolute text-gray-400">${day}</div>`;
+          <a href="/transactions/new?date=${currentDate}" class="top-1 right-2 absolute text-gray-400">${day}</a>`;
 
         if (dayEvents.length > 0) {
+          console.log(
+            `[updateCalendar] Processing day ${day} (${currentDate}) with events:`,
+            dayEvents,
+          );
           cellContent += '<div class="space-y-1 mt-6">';
           dayEvents.forEach((event) => {
             cellContent += `
@@ -577,7 +581,7 @@ const groups = await prisma.transactionGroup.findMany({
     async function loadCurrentMonth() {
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth() + 1;
-      console.log(`[loadCurrentMonth] Checking data for ${year}-${month}`);
+      // console.log(`[loadCurrentMonth] Checking data for ${year}-${month}`);
 
       updateMonthDisplay();
       await loadMonth(year, month);
