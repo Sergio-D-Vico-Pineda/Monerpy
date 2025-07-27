@@ -30,7 +30,7 @@ export const POST: APIRoute = async ({ cookies, request }) => {
       });
     }
 
-    console.log('Login successful:', result);
+    // console.log('Login successful:', result);
 
     // Create secure session cookie
     const session = {
@@ -75,12 +75,3 @@ export const POST: APIRoute = async ({ cookies, request }) => {
     });
   }
 };
-
-/* export const GET: APIRoute = async () => {
-  return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-    status: 405,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-}; */
