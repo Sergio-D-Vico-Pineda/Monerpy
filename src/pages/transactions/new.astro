@@ -271,10 +271,13 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
                                 type="datetime-local"
                                 id="transactionDate"
                                 name="transactionDate"
-                                value={date ||
-                                    new Date(Date.now() + 2 * 60 * 60 * 1000)
-                                        .toISOString()
-                                        .slice(0, 16)}
+                                value={new Date(
+                                    date
+                                        ? date + 2 * 60 * 60 * 1000
+                                        : Date.now() + 2 * 60 * 60 * 1000,
+                                )
+                                    .toISOString()
+                                    .slice(0, 16)}
                                 required
                                 class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                             />

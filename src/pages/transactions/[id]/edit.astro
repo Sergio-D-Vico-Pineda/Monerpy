@@ -45,7 +45,7 @@ const groups = await prisma.transactionGroup.findMany({
 
 // Format date for input
 const date = new Date(transaction.transactionDate);
-date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+date.setHours(date.getHours() + 2);
 const formattedDate = date.toISOString().slice(0, 16);
 ---
 
