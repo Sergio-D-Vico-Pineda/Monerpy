@@ -121,14 +121,18 @@ export const GET: APIRoute = async ({ request }) => {
         });
 
         // Transform regular transactions
-        const regularEvents = transactions.map(event => ({
-            id: event.id,
-            title: event.description || `${event.type} transaction`,
-            date: event.transactionDate.toISOString().split('T')[0],
-            type: event.type,
-            amount: event.amount.toNumber(),
-            recurring: false
-        }));
+        const regularEvents = transactions.map(event => {
+            const dateFormatted = event.transactionDate.toISOString().split('T')[0];
+            
+            return {
+                id: event.id,
+                title: event.description || `${event.type} transaction`,
+                date: dateFormatted,
+                type: event.type,
+                amount: event.amount.toNumber(),
+                recurring: false
+            };
+        });
 
         // Generate occurrences for recurring transactions
         const recurringEvents = recurringTransactions.flatMap(rt =>
@@ -147,6 +151,8 @@ export const GET: APIRoute = async ({ request }) => {
 
         // Combine both types of events
         const calendarEvents = [...regularEvents, ...recurringEvents];
+        
+        console.log(`[Calendar API] Returning ${calendarEvents.length} events for ${year}-${month}:`, calendarEvents);
 
         return new Response(JSON.stringify({ events: calendarEvents }), {
             status: 200,

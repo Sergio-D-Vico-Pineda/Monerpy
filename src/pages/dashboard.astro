@@ -315,7 +315,7 @@ const groups = await prisma.transactionGroup.findMany({
     };
 
     const clearCache = () => {
-      console.log("[Cache] Clearing all calendar cache from localStorage");
+      // console.log("[Cache] Clearing all calendar cache from localStorage");
       Object.keys(localStorage)
         .filter((key) => key.startsWith(CACHE_KEY_PREFIX))
         .forEach((key) => localStorage.removeItem(key));
@@ -436,7 +436,7 @@ const groups = await prisma.transactionGroup.findMany({
 
     // Update calendar UI
     function updateCalendar(events) {
-      // console.log("[updateCalendar] Starting calendar update");
+      console.log("[updateCalendar] Starting calendar update with events:", events);
       if (!calendarGrid) {
         console.error("[updateCalendar] Calendar grid element not found");
         return;
@@ -444,7 +444,7 @@ const groups = await prisma.transactionGroup.findMany({
 
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth();
-      // console.log(`[updateCalendar] Rendering calendar for ${year}-${month + 1}`);
+      console.log(`[updateCalendar] Rendering calendar for ${year}-${month + 1}`);
 
       // Get first day of month and total days
       const firstDay = new Date(year, month, 1).getDay();
@@ -452,12 +452,15 @@ const groups = await prisma.transactionGroup.findMany({
       let startingDay = firstDay - 1; // Convert to Monday-based
       if (startingDay === -1) startingDay = 6; // If Sunday, make it last day
 
-      console.log(`[updateCalendar] Calendar ${year}-${month + 1} parameters:`, {
-        firstDay,
-        lastDay,
-        startingDay,
-        totalEvents: events.length,
-      });
+      console.log(
+        `[updateCalendar] Calendar ${year}-${month + 1} parameters:`,
+        {
+          firstDay,
+          lastDay,
+          startingDay,
+          totalEvents: events.length,
+        },
+      );
 
       // Create calendar grid
       const cells = [];
@@ -471,17 +474,13 @@ const groups = await prisma.transactionGroup.findMany({
 
       // Add cells for each day of the month
       for (let day = 1; day <= lastDay; day++) {
-        const realDate = new Date(year, month, day + 1)
-          .toISOString()
-          .split("T")[0];
+        // BUG FIX: Use direct string formatting to avoid timezone issues
+        // JavaScript Date constructor with timezone conversion can cause off-by-one errors
+        const currentDateISO = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        
+        const realDate = currentDateISO; // Use the same date for links
 
-        const currentDateISO = new Date(year, month, day)
-          .toISOString()
-          .split("T")[0];
-
-        // console.log(`[updateCalendar] Processing day ${day} (${realDate})`);
         const dayEvents = events.filter((event) => {
-          console.log(`[updateCalendar] Filtering events for ${event.date}`);
           return event.date === currentDateISO;
         });
 
@@ -554,7 +553,7 @@ const groups = await prisma.transactionGroup.findMany({
     // Add event listeners for navigation
     if (prevMonthBtn) {
       prevMonthBtn.addEventListener("click", () => {
-        console.log("[Navigation] Moving to previous month");
+        // console.log("[Navigation] Moving to previous month");
         currentDate.setMonth(currentDate.getMonth() - 1);
         loadCurrentMonth();
       });
@@ -562,7 +561,7 @@ const groups = await prisma.transactionGroup.findMany({
 
     if (nextMonthBtn) {
       nextMonthBtn.addEventListener("click", () => {
-        console.log("[Navigation] Moving to next month");
+        // console.log("[Navigation] Moving to next month");
         currentDate.setMonth(currentDate.getMonth() + 1);
         loadCurrentMonth();
       });
@@ -572,7 +571,7 @@ const groups = await prisma.transactionGroup.findMany({
       refreshBtn.addEventListener("click", async () => {
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth() + 1;
-        console.log(`[Refresh] Forcing refresh for ${year}-${month}`);
+        // console.log(`[Refresh] Forcing refresh for ${year}-${month}`);
         localStorage.removeItem(getCacheKey(year, month));
         await loadCurrentMonth();
       });
