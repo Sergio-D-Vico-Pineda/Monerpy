@@ -65,12 +65,13 @@ if (!isAuthenticated(Astro.request)) {
                 </div>
 
                 <div class="flex justify-end space-x-4">
-                    <a
-                        href="/transaction-groups"
+                    <button
+                        type="button"
+                        id="cancelBtn"
                         class="inline-flex justify-center py-2 px-4 border border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-300 bg-gray-800 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
                     >
                         Cancel
-                    </a>
+                    </button>
                     <button
                         type="submit"
                         class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
@@ -83,7 +84,13 @@ if (!isAuthenticated(Astro.request)) {
     </main>
 
     <script>
+        import { initializeNavigation, goBack } from "@lib/navigation";
+
+        // Initialize navigation system
+        initializeNavigation();
+
         const form = document.getElementById("groupForm");
+        const cancelBtn = document.getElementById("cancelBtn");
         form?.addEventListener("submit", async (e) => {
             e.preventDefault();
 
@@ -104,7 +111,7 @@ if (!isAuthenticated(Astro.request)) {
                 });
 
                 if (response.ok) {
-                    window.location.href = "/transaction-groups";
+                    goBack();
                 } else {
                     alert("Failed to create the group");
                 }
@@ -112,6 +119,11 @@ if (!isAuthenticated(Astro.request)) {
                 console.error("Error:", error);
                 alert("Failed to create the group");
             }
+        });
+
+        // Handle cancel button click
+        cancelBtn?.addEventListener("click", () => {
+            goBack();
         });
     </script>
 </Layout>

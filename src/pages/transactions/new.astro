@@ -286,12 +286,13 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
                         </div>
 
                         <div class="flex justify-end space-x-4">
-                            <a
-                                href="/transactions"
+                            <button
+                                type="button"
+                                id="cancelBtn"
                                 class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition duration-200"
                             >
                                 Cancel
-                            </a>
+                            </button>
                             <button
                                 type="button"
                                 id="previewBtn"
@@ -407,6 +408,11 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
 </Layout>
 
 <script>
+    import { initializeNavigation, goBack, handleBrowserBack } from "@lib/navigation";
+
+    // Initialize navigation system
+    initializeNavigation();
+
     let hasChanges = false;
     let leavingTo: string | null = null;
 
@@ -436,6 +442,7 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
     const saveBtn = document.querySelector(
         "button#saveBtn",
     ) as HTMLButtonElement;
+    const cancelBtn = document.getElementById("cancelBtn") as HTMLButtonElement;
 
     // Dialog elements
     const unsavedDialog = document.getElementById("unsavedDialog");
@@ -703,7 +710,7 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
 
             window.showToast("Transaction created successfully!", "success");
             hasChanges = false;
-            window.location.href = "/transactions";
+            goBack();
         } catch (error) {
             console.error("Error creating transaction:", error);
             window.showToast(
@@ -732,6 +739,27 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
         });
     });
 
+    // Handle cancel button click
+    cancelBtn?.addEventListener("click", () => {
+        if (hasChanges) {
+            leavingTo = "cancel";
+            unsavedDialog?.classList.remove("hidden");
+        } else {
+            goBack();
+        }
+    });
+
+    // Handle browser back button
+    handleBrowserBack(() => {
+        if (hasChanges) {
+            // Show unsaved changes dialog for browser back
+            leavingTo = "back";
+            unsavedDialog?.classList.remove("hidden");
+        } else {
+            goBack();
+        }
+    });
+
     window.addEventListener("beforeunload", (e) => {
         if (hasChanges) {
             e.preventDefault();
@@ -747,7 +775,9 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
 
     leaveBtn?.addEventListener("click", () => {
         hasChanges = false;
-        if (leavingTo) {
+        if (leavingTo === "cancel" || leavingTo === "back") {
+            goBack();
+        } else if (leavingTo) {
             window.location.href = leavingTo;
         }
     });

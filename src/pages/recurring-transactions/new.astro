@@ -262,11 +262,21 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
       </form>
     </div>
   </main>
-  <Toast />
-</Layout>
+  
+  <script>
+    import { initializeNavigation, goBack } from "@lib/navigation";
 
-<script is:inline define:vars={{ groupsJson }}>
+    // Initialize navigation system
+    initializeNavigation();
+
+    // Get groups data from the server
+    const groups = JSON.parse(
+      document.querySelector("[data-groups]")?.getAttribute("data-groups") ||
+        "[]",
+    );
+
   const form = document.getElementById("transactionForm");
+    const cancelBtn = document.getElementById("cancelBtn");
   const frequencySelect = document.getElementById("frequency");
   const intervalLabel = document.getElementById("intervalLabel");
   const dayOptions = document.getElementById("dayOptions");
@@ -409,7 +419,7 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
           );
           // Delay redirect to show the success message
           setTimeout(() => {
-            window.location.href = "/recurring-transactions";
+              goBack();
           }, 1000);
         } else {
           const error = await response.json();
@@ -431,4 +441,9 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
       }
     });
   }
+
+    // Handle cancel button click
+    cancelBtn?.addEventListener("click", () => {
+      goBack();
+    });
 </script>
