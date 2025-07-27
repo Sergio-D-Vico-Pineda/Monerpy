@@ -449,7 +449,7 @@ const groups = await prisma.transactionGroup.findMany({
       let startingDay = firstDay - 1; // Convert to Monday-based
       if (startingDay === -1) startingDay = 6; // If Sunday, make it last day
 
-      console.log("[updateCalendar] Calendar parameters:", {
+      console.log(`[updateCalendar] Calendar ${year}-${month + 1} parameters:`, {
         firstDay,
         lastDay,
         startingDay,
@@ -476,7 +476,7 @@ const groups = await prisma.transactionGroup.findMany({
           .toISOString()
           .split("T")[0];
 
-        console.log(`[updateCalendar] Processing day ${day} (${realDate})`);
+        // console.log(`[updateCalendar] Processing day ${day} (${realDate})`);
         const dayEvents = events.filter((event) => {
           console.log(`[updateCalendar] Filtering events for ${event.date}`);
           return event.date === currentDateISO;
