@@ -619,6 +619,9 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
                 throw new Error(
                     "[new] Failed to create transaction - " + error[0].message,
                 );
+            } else {
+                const data = await response.json();
+                console.log("Transaction created:", data);
             }
 
             window.showToast("Transaction created successfully!", "success");
