@@ -85,7 +85,7 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
                                 class="flex justify-center space-x-4 items-center"
                             >
                                 <span class="block text-lg font-medium">
-                                    <span class="text-red-500">*</span> Type:
+                                    <span id="typeAsterisk" class="text-red-500">*</span> Type:
                                 </span>
                                 <label class="inline-flex items-center">
                                     <input
@@ -129,7 +129,7 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
                                 class="block text-sm font-medium mb-2"
                                 for="amount"
                             >
-                                <span class="text-red-500">*</span> Amount (€)
+                                <span id="amountAsterisk" class="text-red-500">*</span> Amount (€)
                             </label>
                             <input
                                 type="number"
@@ -265,19 +265,16 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
                                 class="block text-sm font-medium mb-2"
                                 for="transactionDate"
                             >
-                                <span class="text-red-500">*</span> Date & Time
+                                <span id="dateAsterisk" class="text-red-500">*</span> Date & Time
                             </label>
                             <input
                                 type="datetime-local"
                                 id="transactionDate"
                                 name="transactionDate"
-                                value={new Date(
-                                    date
-                                        ? date + 2 * 60 * 60 * 1000
-                                        : Date.now() + 2 * 60 * 60 * 1000,
-                                )
-                                    .toISOString()
-                                    .slice(0, 16)}
+                                value={date ||
+                                    new Date(Date.now() + 2 * 60 * 60 * 1000)
+                                        .toISOString()
+                                        .slice(0, 16)}
                                 required
                                 class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                             />
@@ -445,62 +442,139 @@ if (groupId && !groups.some((g) => g.id === groupId)) {
     const stayBtn = document.getElementById("stayBtn");
     const leaveBtn = document.getElementById("leaveBtn");
 
+    // Asterisk elements
+    const typeAsterisk = document.getElementById("typeAsterisk");
+    const amountAsterisk = document.getElementById("amountAsterisk");
+    const dateAsterisk = document.getElementById("dateAsterisk");
+
+    // Function to update asterisk visibility
+    function updateAsteriskVisibility(fieldId: string, isValid: boolean) {
+        let asterisk;
+        if (fieldId === "type") {
+            asterisk = typeAsterisk;
+        } else if (fieldId === "amount") {
+            asterisk = amountAsterisk;
+        } else if (fieldId === "transactionDate") {
+            asterisk = dateAsterisk;
+        }
+        
+        if (asterisk) {
+            if (isValid) {
+                asterisk.classList.add("hidden");
+            } else {
+                asterisk.classList.remove("hidden");
+            }
+        }
+    }
+
     let radioChecked: boolean = false;
-    // Track changes
-    [
-        ...typeRadios,
-        amountInput,
-        descriptionInput,
-        dateInput,
-        groupInput,
-    ].forEach((input) => {
+    
+    // Track changes and validate fields
+    [amountInput, descriptionInput, dateInput, groupInput].forEach((input) => {
         input?.addEventListener("change", () => {
             hasChanges = true;
             validateField(input);
         });
+        
+        // Real-time validation on input
+        input?.addEventListener("input", () => {
+            validateField(input);
+        });
     });
+
+    // Special handling for radio buttons (type field)
+    typeRadios.forEach((radio) => {
+        radio.addEventListener("change", () => {
+            hasChanges = true;
+            // Create a pseudo input with id "type" for validation
+            const pseudoInput = { id: "type" } as HTMLElement;
+            validateField(pseudoInput);
+        });
+    });
+
+    // Initial validation to set correct asterisk visibility on page load
+    function initialValidation() {
+        // Validate type field
+        const typeInput = { id: "type" } as HTMLElement;
+        validateField(typeInput);
+        
+        // Validate other required fields
+        validateField(amountInput);
+        validateField(dateInput);
+    }
+
+    // Run initial validation when page loads
+    initialValidation();
 
     // Client-side validation
     function validateField(input: HTMLElement) {
         const error = document.getElementById(`${input.id}Error`);
-        if (!error) return true;
-
-        error.classList.add("hidden");
-
-        if (input.id === "type" && !radioChecked) {
-            if ([...typeRadios].every((radio) => !radio.checked)) {
-                error.textContent = "Please select a type";
-                error.classList.remove("hidden");
-                radioChecked = true;
-                return false;
+        let isValid = true;
+        
+        if (input.id === "type") {
+            const hasSelection = [...typeRadios].some((radio) => radio.checked);
+            if (!hasSelection) {
+                // Don't show error for empty type field, just mark as invalid
+                if (error) {
+                    error.classList.add("hidden");
+                }
+                isValid = false;
+            } else {
+                if (error) {
+                    error.classList.add("hidden");
+                }
+                isValid = true;
             }
         }
 
         if (input.id === "amount") {
             const amount = input as HTMLInputElement;
-            if (!amount.value) {
-                error.textContent = "Please enter an amount";
-                error.classList.remove("hidden");
-                return false;
-            }
+            const hasValue = amount.value.trim() !== "";
             const value = parseFloat(amount.value);
-            if (isNaN(value) || value <= 0) {
-                error.textContent = "Please enter a valid positive amount";
-                error.classList.remove("hidden");
-                return false;
+            
+            if (!hasValue) {
+                // Don't show error for empty amount field, just mark as invalid
+                if (error) {
+                    error.classList.add("hidden");
+                }
+                isValid = false;
+            } else if (isNaN(value) || value <= 0) {
+                // Show error only for invalid values (not empty)
+                if (error) {
+                    error.textContent = "Please enter a valid positive amount";
+                    error.classList.remove("hidden");
+                }
+                isValid = false;
+            } else {
+                if (error) {
+                    error.classList.add("hidden");
+                }
+                isValid = true;
             }
         }
 
         if (input.id === "transactionDate") {
             const date = input as HTMLInputElement;
-            if (!date.value) {
-                error.textContent = "Please select a date and time";
-                error.classList.remove("hidden");
-                return false;
+            const hasValue = date.value.trim() !== "";
+            
+            if (!hasValue) {
+                // Don't show error for empty date field, just mark as invalid
+                if (error) {
+                    error.classList.add("hidden");
+                }
+                isValid = false;
+            } else {
+                if (error) {
+                    error.classList.add("hidden");
+                }
+                isValid = true;
             }
         }
 
-        return true;
+        // Update asterisk visibility - show when invalid, hide when valid
+        updateAsteriskVisibility(input.id, isValid);
+
+        return isValid;
     }
 
     function validateForm() {
