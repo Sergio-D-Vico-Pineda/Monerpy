@@ -48,15 +48,26 @@ export const PUT: APIRoute = async ({ request, params }) => {
 
     try {
         const data = await request.json();
+        console.log('Received data:', data);
+        
         if (data.startDate) {
             data.startDate = new Date(data.startDate);
         }
+        if (data.endDate && data.endDate !== "" && data.endDate !== null) {
+            data.endDate = new Date(data.endDate);
+        } else {
+            data.endDate = null;
+        }
+        
+        console.log('Processed data:', data);
 
         const recurringTransaction = await recurringTransactionService.update(id, userId, data);
         return new Response(JSON.stringify(recurringTransaction));
     } catch (error) {
+        console.error('Update error:', error);
+        const errorMessage = error instanceof Error ? error.message : "Failed to update recurring transaction";
         return new Response(
-            JSON.stringify({ error: "Failed to update recurring transaction" }),
+            JSON.stringify({ error: errorMessage }),
             { status: 500 }
         );
     }

@@ -93,18 +93,24 @@ export const recurringTransactionService = {
         const startDate = data.startDate || current.startDate;
         const nextOccurrence = calculateNextOccurrence(new Date(startDate), recurrenceRule);
 
+        // Prepare update data, filtering out undefined values
+        const updateData: any = {
+            nextOccurrence,
+        };
+
+        if (data.amount !== undefined) updateData.amount = data.amount;
+        if (data.type !== undefined) updateData.type = data.type;
+        if (data.groupId !== undefined) updateData.groupId = data.groupId;
+        if (data.description !== undefined) updateData.description = data.description;
+        if (data.startDate !== undefined) updateData.startDate = data.startDate;
+        if (data.endDate !== undefined) updateData.endDate = data.endDate;
+        if (data.recurrenceRule !== undefined) {
+            updateData.recurrenceRule = JSON.stringify(data.recurrenceRule);
+        }
+
         return prisma.recurringTransaction.update({
             where: { id },
-            data: {
-                amount: data.amount,
-                type: data.type,
-                groupId: data.groupId,
-                description: data.description,
-                startDate: data.startDate,
-                endDate: data.endDate,
-                recurrenceRule: data.recurrenceRule ? JSON.stringify(data.recurrenceRule) : undefined,
-                nextOccurrence,
-            },
+            data: updateData,
             include: {
                 group: true,
             },

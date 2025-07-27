@@ -465,6 +465,8 @@ const data = {
 
       const typeValue = formData.get("type")?.toString();
       const amountValue = formData.get("amount")?.toString();
+      const groupIdValue = formData.get("groupId")?.toString();
+      const endDateValue = formData.get("endDate")?.toString();
 
       if (!typeValue || !amountValue) {
         window.showToast("Please fill in all required fields", "error");
@@ -479,11 +481,13 @@ const data = {
         type: typeValue,
         amount: parseFloat(amountValue),
         description: formData.get("description")?.toString() || "",
-        groupId: groupIdValue ? parseInt(groupIdValue) : undefined,
+        groupId: groupIdValue && groupIdValue !== "" ? parseInt(groupIdValue) : null,
         startDate: formData.get("startDate")?.toString(),
-        endDate: formData.get("endDate")?.toString() || undefined,
+        endDate: endDateValue && endDateValue !== "" ? endDateValue : null,
         recurrenceRule,
       };
+
+      console.log('Sending update data:', updateData);
 
       try {
         const response = await fetch(
@@ -507,9 +511,10 @@ const data = {
             window.location.href = "/recurring-transactions";
           }, 1000);
         } else {
-          const error = await response.json();
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          console.error('API error response:', errorData);
           window.showToast(
-            error.error || "Failed to update recurring transaction",
+            errorData.error || "Failed to update recurring transaction",
             "error",
           );
           // Reset button state
@@ -518,6 +523,7 @@ const data = {
           submitButton.disabled = false;
         }
       } catch (error) {
+        console.error('Network error:', error);
         window.showToast("Failed to update recurring transaction", "error");
         // Reset button state
         submitText.classList.remove("hidden");
