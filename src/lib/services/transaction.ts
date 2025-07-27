@@ -93,7 +93,6 @@ const transactionService = {
             ...(typeof filters.search === 'string' && filters.search.trim() !== '' ? {
                 description: {
                     contains: filters.search.trim(),
-                    mode: 'insensitive' as const,
                 }
             } : {}),
             ...(dateRange ? {
