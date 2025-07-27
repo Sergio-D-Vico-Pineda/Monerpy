@@ -1,5 +1,6 @@
 ---
 import Layout from "@layouts/Layout.astro";
+import Footer from "@comps/Footer.astro";
 import { isAuthenticated, getCurrentUserId } from "@midd/auth";
 import { prisma } from "@prisma/index.js";
 
@@ -233,6 +234,8 @@ const groups = await prisma.transactionGroup.findMany({
       <div id="calendar-grid" class="gap-1 grid grid-cols-7"></div>
     </section>
   </main>
+
+  <Footer />
 
   <script is:inline define:vars={{ userId }}>
     // Define shapes of our objects using JSDoc for type checking
