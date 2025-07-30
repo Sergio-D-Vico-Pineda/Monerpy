@@ -170,7 +170,7 @@ Future enhancements may include:
 - IP-based access controls
 - Enhanced audit logging
 
-## Notes
+## License
 
 This documentation is based on the current state of the Monerpy project. The application is in slow development (version 0.0.1), and some features mentioned in the database schema may not yet have complete UI implementations. The project follows modern web development practices with a focus on TypeScript, responsive design, and user experience.
 
