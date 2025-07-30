@@ -13,4 +13,4 @@ This project is licensed under the Creative Commons Attribution-NonCommercial-Sh
   
 For more details, see the [full license text](https://creativecommons.org/licenses/by-nc-sa/4.0/).  
   
-© 2024 Scarpy19 (servicpin2@alu.edu.gva.es)
+© 2025 Scarpy19 (servicpin2@alu.edu.gva.es)
