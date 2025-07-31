@@ -170,7 +170,7 @@ Future enhancements may include:
 - IP-based access controls
 - Enhanced audit logging
 
-## Notes
+## License
 
 This documentation is based on the current state of the Monerpy project. The application is in slow development (version 0.0.1), and some features mentioned in the database schema may not yet have complete UI implementations. The project follows modern web development practices with a focus on TypeScript, responsive design, and user experience.
 
@@ -178,3 +178,5 @@ This documentation is based on the current state of the Monerpy project. The app
 ![License](image.png)
 
 <a href="https://github.com/Sergio-D-Vico-Pineda/Monerpy">Monerpy</a> © 2025 by <a href="https://github.com/Sergio-D-Vico-Pineda">Scarpy19</a> is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a><img src="https://mirrors.creativecommons.org/presskit/icons/cc.svg" alt="" style="max-width: 1em;max-height:1em;margin-left: .2em;"><img src="https://mirrors.creativecommons.org/presskit/icons/by.svg" alt="" style="max-width: 1em;max-height:1em;margin-left: .2em;"><img src="https://mirrors.creativecommons.org/presskit/icons/nc.svg" alt="" style="max-width: 1em;max-height:1em;margin-left: .2em;"><img src="https://mirrors.creativecommons.org/presskit/icons/sa.svg" alt="" style="max-width: 1em;max-height:1em;margin-left: .2em;">
+
+Favicon.png Image from Dead Cells by Motion Twin, licensed under CC BY-NC-SA 4.0
