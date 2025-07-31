@@ -122,12 +122,11 @@ export const GET: APIRoute = async ({ request }) => {
 
         // Transform regular transactions
         const regularEvents = transactions.map(event => {
-            const dateFormatted = event.transactionDate.toISOString().split('T')[0];
             
             return {
                 id: event.id,
                 title: event.description || `${event.type} transaction`,
-                date: dateFormatted,
+                date: event.transactionDate,
                 type: event.type,
                 amount: event.amount.toNumber(),
                 recurring: false

@@ -436,7 +436,10 @@ const groups = await prisma.transactionGroup.findMany({
 
     // Update calendar UI
     function updateCalendar(events) {
-      console.log("[updateCalendar] Starting calendar update with events:", events);
+      console.log(
+        "[updateCalendar] Starting calendar update with events:",
+        events,
+      );
       if (!calendarGrid) {
         console.error("[updateCalendar] Calendar grid element not found");
         return;
@@ -444,7 +447,9 @@ const groups = await prisma.transactionGroup.findMany({
 
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth();
-      console.log(`[updateCalendar] Rendering calendar for ${year}-${month + 1}`);
+      console.log(
+        `[updateCalendar] Rendering calendar for ${year}-${month + 1}`,
+      );
 
       // Get first day of month and total days
       const firstDay = new Date(year, month, 1).getDay();
@@ -476,12 +481,14 @@ const groups = await prisma.transactionGroup.findMany({
       for (let day = 1; day <= lastDay; day++) {
         // BUG FIX: Use direct string formatting to avoid timezone issues
         // JavaScript Date constructor with timezone conversion can cause off-by-one errors
-        const currentDateISO = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        
+        const currentDateISO = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
         const realDate = currentDateISO; // Use the same date for links
 
         const dayEvents = events.filter((event) => {
-          return event.date === currentDateISO;
+          return (
+            new Date(event.date).toISOString().split("T")[0] === currentDateISO
+          );
         });
 
         let cellContent = `<div class="relative bg-gray-700 p-2 rounded-lg min-h-[100px]">
@@ -495,7 +502,8 @@ const groups = await prisma.transactionGroup.findMany({
           cellContent += '<div class="space-y-1 mt-6">';
           dayEvents.forEach((event) => {
             cellContent += `
-              <a href="${event.recurring ? "/recurring-transactions" : "/transactions"}/${event.id}/edit" 
+                <a title="${new Date(event.date).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", hour12: true })}" 
+                 href="${event.recurring ? "/recurring-transactions" : "/transactions"}/${event.id}/edit" 
                  class="block text-sm p-1 rounded ${
                    event.type === "income"
                      ? event.recurring
@@ -507,7 +515,7 @@ const groups = await prisma.transactionGroup.findMany({
                  } hover:no-underline transition-colors">
                 ${formatCurrency(event.amount)}
                 ${event.title ? `<br><span class="text-xs ${event.recurring ? "text-gray-500" : "text-gray-400"}">${event.title}</span>` : ""}
-              </a>`;
+                </a>`;
           });
           cellContent += "</div>";
         }
